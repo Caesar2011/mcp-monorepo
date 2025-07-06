@@ -1,6 +1,6 @@
-import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio.js";
-import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js";
-import {currentDatetimeHandler, fetchEventsHandler} from "./handler.js";
+import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
+import { currentDatetimeHandler, fetchEventsHandler } from './handler.js'
 import { z } from 'zod'
 
 // Create an MCP server instance
@@ -23,7 +23,7 @@ server.registerTool(
         .describe('Output format: iso, local, utc, or timestamp'),
     },
   },
-  currentDatetimeHandler
+  currentDatetimeHandler,
 )
 
 // Register the "fetch-events" tool
@@ -38,7 +38,7 @@ server.registerTool(
       limit: z.number().default(50).describe('Maximum number of events to return (default: 50)'),
     },
   },
-  fetchEventsHandler
+  fetchEventsHandler,
 )
 
 const transport = new StdioServerTransport()

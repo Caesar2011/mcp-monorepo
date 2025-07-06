@@ -56,16 +56,18 @@ export const parseIcsContent = async (icsContent: string, source: string): Promi
   const entries = Object.values(await ical.async.parseICS(icsContent))
   return entries
     .filter((entry) => entry.type === 'VEVENT')
-    .map((event) =>  ({
-        uid: event.uid,
-        summary: event.summary,
-        description: event.description,
-        location: event.location,
-        dtstart: event.start,
-        dtend: event.end,
-        allDay: event.datetype === 'date',
-        source: source,
-      } satisfies CalendarEvent)
+    .map(
+      (event) =>
+        ({
+          uid: event.uid,
+          summary: event.summary,
+          description: event.description,
+          location: event.location,
+          dtstart: event.start,
+          dtend: event.end,
+          allDay: event.datetype === 'date',
+          source: source,
+        }) satisfies CalendarEvent,
     )
 }
 

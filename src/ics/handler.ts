@@ -1,7 +1,7 @@
-import {CallToolResult} from "@modelcontextprotocol/sdk/types.js";
-import {CalendarEvent, formatDate, getIcsUrls, parseIcsContent} from "./helper.js";
+import { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
+import { CalendarEvent, formatDate, getIcsUrls, parseIcsContent } from './helper.js'
 
-export const currentDatetimeHandler=  async ({ format = 'local' }): Promise<CallToolResult> => {
+export const currentDatetimeHandler = async ({ format = 'local' }): Promise<CallToolResult> => {
   try {
     const now = new Date()
     let formattedTime = ''
@@ -58,7 +58,15 @@ export const currentDatetimeHandler=  async ({ format = 'local' }): Promise<Call
   }
 }
 
-export const fetchEventsHandler = async ({ startDate, endDate, limit = 50 }: {startDate: string, endDate: string, limit?: number|undefined}): Promise<CallToolResult> => {
+export const fetchEventsHandler = async ({
+  startDate,
+  endDate,
+  limit = 50,
+}: {
+  startDate: string
+  endDate: string
+  limit?: number | undefined
+}): Promise<CallToolResult> => {
   try {
     const sources = getIcsUrls()
     console.log(`MCP Tool: Fetching calendar events from ${sources.length} source(s)`)
@@ -132,7 +140,7 @@ export const fetchEventsHandler = async ({ startDate, endDate, limit = 50 }: {st
     output += `Period: ${startDate} to ${endDate}\n`
 
     if (errors.length > 0) {
-      output += `\n⚠️  Errors encountered:\n${errors.map(e => `   • ${e}`).join('\n')}\n`
+      output += `\n⚠️  Errors encountered:\n${errors.map((e) => `   • ${e}`).join('\n')}\n`
     }
 
     output += '\n'

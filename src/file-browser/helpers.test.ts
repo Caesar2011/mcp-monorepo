@@ -104,7 +104,6 @@ describe('file-browser edge cases', () => {
       ['app.log', ['*.log', '?(temp)', '[0-9]+.tmp'], true],
       ['?(temp)/file', ['*.log', '?(temp)', '[0-9]+.tmp'], true],
     ])('should check if path "%s" should be ignored with patterns %j -> %s', (path, patterns, expected) => {
-      console.log('TEST:', path, patterns, expected)
       expect(shouldIgnorePath(path, patterns)).toBe(expected)
     })
   })
@@ -445,8 +444,7 @@ describe('file-browser edge cases', () => {
         expectedLines: ['before', 'pattern text here', 'after', 'more'],
         unexpectedLines: [],
       },
-    ])('$name', async ({ name, content, pattern, expectedLines, unexpectedLines }) => {
-      console.log(name)
+    ])('$name', async ({ content, pattern, expectedLines, unexpectedLines }) => {
       const filePath = join(tempDir, 'name.txt')
       await fs.writeFile(filePath, content)
 
@@ -455,7 +453,6 @@ describe('file-browser edge cases', () => {
       await searchInFileForPattern(filePath, tempDir, pattern, results, matchCount)
 
       const resultText = results.join('\n')
-      console.log(matchCount.count, results, expectedLines)
       expectedLines.forEach((line) => {
         expect(resultText).toContain(line)
       })

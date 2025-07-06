@@ -1,5 +1,5 @@
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
-import { CalendarEvent, formatDate, getIcsUrls, parseIcsContent } from './helper.js'
+import { CalendarEvent, formatDate, getIcsUrls, parseIcsContent, expandRecurringEvents } from './helper.js'
 
 export const currentDatetimeHandler = async ({ format = 'local' }): Promise<CallToolResult> => {
   try {
@@ -111,8 +111,11 @@ export const fetchEventsHandler = async ({
       }
     }
 
+    // Expand recurring events within the date range
+    const expandedEvents = expandRecurringEvents(allEvents, start, end)
+
     // Filter events by date range
-    const filteredEvents = allEvents
+    const filteredEvents = expandedEvents
       .filter((event) => {
         const eventStart = event.dtstart
         const eventEnd = event.dtend || event.dtstart
@@ -135,26 +138,42 @@ export const fetchEventsHandler = async ({
       }
     }
 
+    // Count recurring vs non-recurring events for stats
+    const recurringCount = allEvents.filter((e) => e.isRecurring).length
+    const totalOriginalEvents = allEvents.length
+    const expandedCount = expandedEvents.length - (totalOriginalEvents - recurringCount)
+
     // Format events for display
     let output = `Calendar Events (${filteredEvents.length} found from ${sources.length} source(s)):\n`
     output += `Period: ${startDate} to ${endDate}\n`
 
+    if (recurringCount > 0) {
+      output += `📅 Recurring events processed: ${recurringCount} (expanded to ${expandedCount} instances)\n`
+    }
+
     if (errors.length > 0) {
-      output += `\n⚠️  Errors encountered:\n${errors.map((e) => `   • ${e}`).join('\n')}\n`
+      output += `\n⚠️ Errors encountered:\n${errors.map((e) => ` • ${e}`).join('\n')}\n`
     }
 
     output += '\n'
 
     filteredEvents.forEach((event, index) => {
-      output += `${index + 1}. ${event.summary}\n`
-      output += `   📋 Source: ${event.source}\n`
+      output += `${index + 1}. ${event.summary}`
+
+      // Add recurrence indicator
+      if (event.uid.includes('_')) {
+        output += ' 🔄' // Recurring event instance indicator
+      }
+
+      output += '\n'
+      output += ` 📋 Source: ${event.source}\n`
 
       if (event.allDay) {
-        output += `   📅 ${formatDate(event.dtstart, true)}\n`
+        output += ` 📅 ${formatDate(event.dtstart, true)}\n`
       } else {
         const startStr = formatDate(event.dtstart)
         const endStr = event.dtend ? formatDate(event.dtend) : ''
-        output += `   🕒 ${startStr}`
+        output += ` 🕒 ${startStr}`
         if (endStr && endStr !== startStr) {
           output += ` → ${endStr}`
         }
@@ -162,12 +181,12 @@ export const fetchEventsHandler = async ({
       }
 
       if (event.location) {
-        output += `   📍 ${event.location}\n`
+        output += ` 📍 ${event.location}\n`
       }
 
       if (event.description) {
         const desc = event.description.length > 400 ? event.description.substring(0, 400) + '...' : event.description
-        output += `   📄 ${desc}\n`
+        output += ` 📄 ${desc}\n`
       }
 
       output += '\n'

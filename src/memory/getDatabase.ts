@@ -1,6 +1,6 @@
-import {fileURLToPath} from 'url'
+import { fileURLToPath } from 'url'
 import Database from 'better-sqlite3'
-import {dirname, join} from 'path'
+import { dirname, join } from 'path'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)

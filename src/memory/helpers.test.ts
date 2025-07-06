@@ -42,13 +42,13 @@ const initializeTestDatabase = () => {
 const resetTestDatabase = () => {
   if (testDb) {
     testDb.exec('DELETE FROM memories')
-    testDb.exec('DELETE FROM sqlite_sequence WHERE name = \'memories\'')
+    testDb.exec("DELETE FROM sqlite_sequence WHERE name = 'memories'")
   }
 }
 
 // Mock the getDatabase function
 vi.mock('./getDatabase.js', () => ({
-  getDatabase: () => testDb
+  getDatabase: () => testDb,
 }))
 
 describe.sequential('Memory Helpers', () => {
@@ -257,8 +257,8 @@ describe.sequential('Memory Helpers', () => {
     it('should find memories by category keyword', () => {
       const results = searchMemoriesByKeyword('coding')
       expect(results).toHaveLength(2)
-      expect(results.map(m => m.content)).toContain('JavaScript programming')
-      expect(results.map(m => m.content)).toContain('Python tutorial')
+      expect(results.map((m) => m.content)).toContain('JavaScript programming')
+      expect(results.map((m) => m.content)).toContain('Python tutorial')
     })
 
     it('should return empty array for no matches', () => {
@@ -299,9 +299,9 @@ describe.sequential('Memory Helpers', () => {
 
     it('should order memories by storage type and creation time', async () => {
       const id1 = storeMemory('Long term 1', null, 'long_term')
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
       const id2 = storeMemory('Short term 1', null, 'short_term')
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
       const id3 = storeMemory('Long term 2', null, 'long_term')
 
       const memories = getAllMemories()
@@ -439,9 +439,11 @@ describe.sequential('Memory Helpers', () => {
       // Store a memory that expires in the past
       const pastTimestamp = Date.now() - 86400000 // 1 day ago
 
-      testDb.prepare(
-        'INSERT INTO memories (content, category, storage_type, created_timestamp, invalid_after) VALUES (?, ?, ?, ?, ?)'
-      ).run('Expired memory', null, 'short_term', pastTimestamp, pastTimestamp)
+      testDb
+        .prepare(
+          'INSERT INTO memories (content, category, storage_type, created_timestamp, invalid_after) VALUES (?, ?, ?, ?, ?)',
+        )
+        .run('Expired memory', null, 'short_term', pastTimestamp, pastTimestamp)
 
       // Store a valid memory
       storeMemory('Valid memory', null, 'long_term')

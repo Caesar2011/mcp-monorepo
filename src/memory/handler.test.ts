@@ -165,7 +165,11 @@ describe('Memory Handlers', () => {
             memory: 'Test memory',
           })
 
-          const textContent = result.content[0] as { type: 'text'; text: string; _meta: { stderr: string; exitCode: number } }
+          const textContent = result.content[0] as {
+            type: 'text'
+            text: string
+            _meta: { stderr: string; exitCode: number }
+          }
           expect(textContent.text).toContain('String error')
           expect(textContent._meta).toEqual({ stderr: 'String error', exitCode: 1 })
         })
@@ -318,7 +322,7 @@ describe('Memory Handlers', () => {
 
       vi.mocked(searchMemoriesByKeyword).mockReturnValue(mockMemories)
       vi.mocked(formatMemory).mockImplementation(
-        (memory) => `[ID: ${memory.id}] ${memory.content} [${memory.category}]`
+        (memory) => `[ID: ${memory.id}] ${memory.content} [${memory.category}]`,
       )
 
       const result = await searchMemoriesHandler({ keyword: 'test' })
@@ -418,10 +422,14 @@ describe('Memory Handlers', () => {
       vi.mocked(calculateMemoryStats).mockReturnValue(mockStats)
       vi.mocked(formatMemory).mockImplementation((memory) => `${memory.id}: ${memory.content}`)
       vi.mocked(getStorageTypeEmoji).mockImplementation((type) =>
-        type === 'long_term' ? '🏛️' : type === 'short_term' ? '⏰' : '📅'
+        type === 'long_term' ? '🏛️' : type === 'short_term' ? '⏰' : '📅',
       )
       vi.mocked(getStorageTypeDisplayName).mockImplementation((type) =>
-        type === 'long_term' ? 'LONG-TERM MEMORIES (Permanent)' : type === 'short_term' ? 'SHORT-TERM MEMORIES (7 days)' : 'MID-TERM MEMORIES (3 months)'
+        type === 'long_term'
+          ? 'LONG-TERM MEMORIES (Permanent)'
+          : type === 'short_term'
+            ? 'SHORT-TERM MEMORIES (7 days)'
+            : 'MID-TERM MEMORIES (3 months)',
       )
 
       const result = await getAllMemoriesHandler()

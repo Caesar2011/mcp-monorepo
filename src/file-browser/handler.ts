@@ -126,8 +126,6 @@ export const moveHandler = async ({
   destinationPath: string
 }): Promise<CallToolResult> => {
   const cwd = getWorkingDirectory()
-  console.log(cwd, sourcePath, destinationPath)
-
   // Validate both paths are within working directory
   if (!validatePath(cwd, sourcePath)) {
     return {

@@ -31,7 +31,7 @@ server.registerTool(
     title: 'Get Location Geocoding',
     description: 'Get geographic coordinates and information for a location by name.',
     inputSchema: {
-      name: z.string().min(1).describe('Name of the location to search for'),
+      name: z.string().min(1).describe('Name of the location to search for (enter only one keyword - city OR region, not both)'),
     },
   },
   getGeocodingHandler,

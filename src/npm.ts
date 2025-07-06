@@ -69,10 +69,6 @@ server.registerTool(
       if (Object.keys(scripts).length === 0) {
         return {
           content: [{ type: 'text', text: 'No npm scripts found in package.json' }],
-          toolOutput: {
-            stderr: '',
-            exitCode: 0,
-          },
         }
       }
 
@@ -84,21 +80,16 @@ server.registerTool(
 
       return {
         content: [{ type: 'text', text: output }],
-        toolOutput: {
-          stderr: '',
-          exitCode: 0,
-        },
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       console.error(`Failed to read or parse package.json: ${errorMessage}`)
 
       return {
-        content: [{ type: 'text', text: `Error reading package.json: ${errorMessage}` }],
-        toolOutput: {
+        content: [{ type: 'text', text: `Error reading package.json.`, _meta: {
           stderr: errorMessage,
-          exitCode: 1,
-        },
+        exitCode: 1,
+    } }],
       }
     }
   },

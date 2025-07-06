@@ -44,7 +44,7 @@ export const applyGitDiffHandler = async ({ diff }: { diff: string }): Promise<C
     await writeFile(tempDiffFile, normalizedDiff, 'utf-8')
 
     // Apply the diff using `git apply` command with timeout and non-interactive flags
-    const { stdout, stderr } = await execPromise(`git apply --reject --ignore-whitespace "${resolve(tempDiffFile)}"`, {
+    const { stdout } = await execPromise(`git apply --reject --ignore-whitespace "${resolve(tempDiffFile)}"`, {
       cwd,
       killSignal: 'SIGKILL',
     })
@@ -57,7 +57,6 @@ export const applyGitDiffHandler = async ({ diff }: { diff: string }): Promise<C
         {
           type: 'text',
           text: `Successfully applied git diff.\n\n${stdout}`,
-          _meta: { stderr, exitCode: 0 },
         },
       ],
     }
@@ -71,7 +70,6 @@ export const applyGitDiffHandler = async ({ diff }: { diff: string }): Promise<C
         {
           type: 'text',
           text: `Error applying git diff: ${errorMessage}`,
-          _meta: { stderr: errorMessage, exitCode: 1 },
         },
       ],
     }
@@ -88,7 +86,6 @@ export const rmHandler = async ({ targetPath }: { targetPath: string }): Promise
         {
           type: 'text',
           text: 'Error: Target path is outside working directory',
-          _meta: { stderr: 'Security violation: path outside working directory', exitCode: 1 },
         },
       ],
     }
@@ -104,7 +101,6 @@ export const rmHandler = async ({ targetPath }: { targetPath: string }): Promise
         {
           type: 'text',
           text: `Successfully removed ${targetPath}`,
-          _meta: { stderr: '', exitCode: 0 },
         },
       ],
     }
@@ -112,7 +108,7 @@ export const rmHandler = async ({ targetPath }: { targetPath: string }): Promise
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return {
       content: [
-        { type: 'text', text: `Error removing target: ${errorMessage}`, _meta: { stderr: errorMessage, exitCode: 1 } },
+        { type: 'text', text: `Error removing target: ${errorMessage}` },
       ],
     }
   }
@@ -133,7 +129,6 @@ export const moveHandler = async ({
         {
           type: 'text',
           text: 'Error: Source path is outside working directory',
-          _meta: { stderr: 'Security violation: path outside working directory', exitCode: 1 },
         },
       ],
     }
@@ -145,7 +140,6 @@ export const moveHandler = async ({
         {
           type: 'text',
           text: 'Error: Destination path is outside working directory',
-          _meta: { stderr: 'Security violation: path outside working directory', exitCode: 1 },
         },
       ],
     }
@@ -167,7 +161,6 @@ export const moveHandler = async ({
         {
           type: 'text',
           text: `Successfully moved ${sourcePath} to ${destinationPath}`,
-          _meta: { stderr: '', exitCode: 0 },
         },
       ],
     }
@@ -175,7 +168,7 @@ export const moveHandler = async ({
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return {
       content: [
-        { type: 'text', text: `Error moving file: ${errorMessage}`, _meta: { stderr: errorMessage, exitCode: 1 } },
+        { type: 'text', text: `Error moving file: ${errorMessage}` },
       ],
     }
   }
@@ -191,7 +184,6 @@ export const mkdirHandler = async ({ dirPath }: { dirPath: string }): Promise<Ca
         {
           type: 'text',
           text: 'Error: Directory path is outside working directory',
-          _meta: { stderr: 'Security violation: path outside working directory', exitCode: 1 },
         },
       ],
     }
@@ -207,7 +199,6 @@ export const mkdirHandler = async ({ dirPath }: { dirPath: string }): Promise<Ca
         {
           type: 'text',
           text: `Successfully created directory ${dirPath}`,
-          _meta: { stderr: '', exitCode: 0 },
         },
       ],
     }
@@ -218,7 +209,6 @@ export const mkdirHandler = async ({ dirPath }: { dirPath: string }): Promise<Ca
         {
           type: 'text',
           text: `Error creating directory: ${errorMessage}`,
-          _meta: { stderr: errorMessage, exitCode: 1 },
         },
       ],
     }
@@ -236,7 +226,6 @@ export const searchHandler = async ({ pattern }: { pattern: string }): Promise<C
         {
           type: 'text',
           text: 'Error: Current directory is outside working directory',
-          _meta: { stderr: 'Security violation', exitCode: 1 },
         },
       ],
     }
@@ -249,7 +238,6 @@ export const searchHandler = async ({ pattern }: { pattern: string }): Promise<C
       {
         type: 'text',
         text: results.length > 0 ? `Found files:\n${results.join('\n')}` : 'No files found matching pattern',
-        _meta: { stderr: '', exitCode: 0 },
       },
     ],
   }
@@ -276,7 +264,6 @@ export const lsHandler = async ({ path: subPath }: { path?: string | undefined }
         {
           type: 'text',
           text: `Contents of ${subPath || '.'}:\n${results.join('\n')}`,
-          _meta: { stderr: '', exitCode: 0 },
         },
       ],
     }
@@ -287,7 +274,6 @@ export const lsHandler = async ({ path: subPath }: { path?: string | undefined }
         {
           type: 'text',
           text: `Error listing directory: ${errorMessage}`,
-          _meta: { stderr: errorMessage, exitCode: 1 },
         },
       ],
     }
@@ -306,7 +292,6 @@ export const treeHandler = async ({ depth = 5 }: { depth?: number }): Promise<Ca
         {
           type: 'text',
           text: 'Error: Current directory is outside working directory',
-          _meta: { stderr: 'Security violation', exitCode: 1 },
         },
       ],
     }
@@ -319,7 +304,6 @@ export const treeHandler = async ({ depth = 5 }: { depth?: number }): Promise<Ca
       {
         type: 'text',
         text: `Directory tree (max depth: ${depth}, showing ${fileCount.count} items):\n${results.join('\n')}`,
-        _meta: { stderr: '', exitCode: 0 },
       },
     ],
   }
@@ -343,7 +327,6 @@ export const grepHandler = async ({
         {
           type: 'text',
           text: 'Error: Current directory is outside working directory',
-          _meta: { stderr: 'Security violation', exitCode: 1 },
         },
       ],
     }
@@ -356,7 +339,6 @@ export const grepHandler = async ({
       {
         type: 'text',
         text: results.length > 0 ? `Found ${matchCount.count} matches:\n${results.join('\n')}` : 'No matches found',
-        _meta: { stderr: '', exitCode: 0 },
       },
     ],
   }
@@ -380,7 +362,6 @@ export const grepReplaceHandler = async ({
         {
           type: 'text',
           text: 'Error: File path is outside working directory',
-          _meta: { stderr: 'Security violation: path outside working directory', exitCode: 1 },
         },
       ],
     }
@@ -402,7 +383,6 @@ export const grepReplaceHandler = async ({
           {
             type: 'text',
             text: `Replaced ${matches} occurrences in ${filePath}`,
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       }
@@ -412,7 +392,6 @@ export const grepReplaceHandler = async ({
           {
             type: 'text',
             text: `No matches found in ${filePath}`,
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       }
@@ -421,7 +400,7 @@ export const grepReplaceHandler = async ({
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return {
       content: [
-        { type: 'text', text: `Error processing file: ${errorMessage}`, _meta: { stderr: errorMessage, exitCode: 1 } },
+        { type: 'text', text: `Error processing file: ${errorMessage}` },
       ],
     }
   }
@@ -438,7 +417,6 @@ export const openHandler = async ({ filePath }: { filePath: string }): Promise<C
         {
           type: 'text',
           text: `Content of ${filePath}:\n\n${content}`,
-          _meta: { stderr: '', exitCode: 0 },
         },
       ],
     }
@@ -446,7 +424,7 @@ export const openHandler = async ({ filePath }: { filePath: string }): Promise<C
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return {
       content: [
-        { type: 'text', text: `Error reading file: ${errorMessage}`, _meta: { stderr: errorMessage, exitCode: 1 } },
+        { type: 'text', text: `Error reading file: ${errorMessage}` },
       ],
     }
   }
@@ -477,7 +455,6 @@ export const openMultipleHandler = async ({ filePaths }: { filePaths: string[] }
       {
         type: 'text',
         text: `Contents of ${filePaths.length} files:${results.join('\n')}`,
-        _meta: { stderr: '', exitCode: 0 },
       },
     ],
   }
@@ -499,7 +476,6 @@ export const writeHandler = async ({
         {
           type: 'text',
           text: 'Error: File path is outside working directory',
-          _meta: { stderr: 'Security violation: path outside working directory', exitCode: 1 },
         },
       ],
     }
@@ -518,7 +494,6 @@ export const writeHandler = async ({
         {
           type: 'text',
           text: `Successfully wrote ${content.length} characters to ${filePath}`,
-          _meta: { stderr: '', exitCode: 0 },
         },
       ],
     }
@@ -526,7 +501,7 @@ export const writeHandler = async ({
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return {
       content: [
-        { type: 'text', text: `Error writing file: ${errorMessage}`, _meta: { stderr: errorMessage, exitCode: 1 } },
+        { type: 'text', text: `Error writing file: ${errorMessage}` },
       ],
     }
   }

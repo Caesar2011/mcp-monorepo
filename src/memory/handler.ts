@@ -26,7 +26,6 @@ function createSuccessResponse(message: string): CallToolResult {
       {
         type: 'text',
         text: message,
-        _meta: { stderr: '', exitCode: 0 },
       },
     ],
   }
@@ -39,7 +38,7 @@ function createErrorResponse(message: string, stderr: string): CallToolResult {
       {
         type: 'text',
         text: message,
-        _meta: { stderr, exitCode: 1 },
+        _meta: { stderr },
       },
     ],
   }

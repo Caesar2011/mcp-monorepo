@@ -85,7 +85,6 @@ describe('Geocoding Handler', () => {
           {
             type: 'text',
             text: mockFormattedData,
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       })
@@ -103,7 +102,7 @@ describe('Geocoding Handler', () => {
       const result = await getGeocodingHandler({ name: ' New York ' })
 
       expect(mockFetchGeocodingData).toHaveBeenCalledWith('New York')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
 
     it('should handle empty location name', async () => {
@@ -114,7 +113,7 @@ describe('Geocoding Handler', () => {
           {
             type: 'text',
             text: 'Error: Location name cannot be empty.',
-            _meta: { stderr: 'Empty location name', exitCode: 1 },
+            _meta: { stderr: 'Empty location name' },
           },
         ],
       })
@@ -130,7 +129,7 @@ describe('Geocoding Handler', () => {
           {
             type: 'text',
             text: 'Error: Location name cannot be empty.',
-            _meta: { stderr: 'Empty location name', exitCode: 1 },
+            _meta: { stderr: 'Empty location name' },
           },
         ],
       })
@@ -149,7 +148,7 @@ describe('Geocoding Handler', () => {
           {
             type: 'text',
             text: 'Error getting geocoding data for location "TestCity": API request failed',
-            _meta: { stderr: 'API request failed', exitCode: 1 },
+            _meta: { stderr: 'API request failed' },
           },
         ],
       })
@@ -165,7 +164,7 @@ describe('Geocoding Handler', () => {
           {
             type: 'text',
             text: 'Error getting geocoding data for location "TestCity": Unknown error',
-            _meta: { stderr: 'Unknown error', exitCode: 1 },
+            _meta: { stderr: 'Unknown error' },
           },
         ],
       })
@@ -185,7 +184,7 @@ describe('Geocoding Handler', () => {
           {
             type: 'text',
             text: 'Error getting geocoding data for location "TestCity": Processing failed',
-            _meta: { stderr: 'Processing failed', exitCode: 1 },
+            _meta: { stderr: 'Processing failed' },
           },
         ],
       })
@@ -207,7 +206,7 @@ describe('Geocoding Handler', () => {
           {
             type: 'text',
             text: 'Error getting geocoding data for location "TestCity": Formatting failed',
-            _meta: { stderr: 'Formatting failed', exitCode: 1 },
+            _meta: { stderr: 'Formatting failed' },
           },
         ],
       })
@@ -293,7 +292,7 @@ describe('Geocoding Handler', () => {
       const result = await getGeocodingHandler({ name: 'Paris' })
 
       expect(result.content?.[0]?.text).toBe(mockFormattedData)
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
   })
 })

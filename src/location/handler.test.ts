@@ -45,7 +45,6 @@ describe('Location Handlers', () => {
           {
             type: 'text',
             text: `Current Location Information:\n\n${mockFormattedData}`,
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       })
@@ -65,7 +64,7 @@ describe('Location Handlers', () => {
           {
             type: 'text',
             text: `Error getting current location: ${errorMessage}`,
-            _meta: { stderr: errorMessage, exitCode: 1 },
+            _meta: { stderr: errorMessage },
           },
         ],
       })
@@ -90,7 +89,7 @@ describe('Location Handlers', () => {
           {
             type: 'text',
             text: `Error getting current location: ${errorMessage}`,
-            _meta: { stderr: errorMessage, exitCode: 1 },
+            _meta: { stderr: errorMessage },
           },
         ],
       })
@@ -118,7 +117,7 @@ describe('Location Handlers', () => {
           {
             type: 'text',
             text: `Error getting current location: ${errorMessage}`,
-            _meta: { stderr: errorMessage, exitCode: 1 },
+            _meta: { stderr: errorMessage },
           },
         ],
       })
@@ -137,7 +136,7 @@ describe('Location Handlers', () => {
           {
             type: 'text',
             text: 'Error getting current location: Unknown error',
-            _meta: { stderr: 'Unknown error', exitCode: 1 },
+            _meta: { stderr: 'Unknown error' },
           },
         ],
       })
@@ -172,7 +171,6 @@ describe('Location Handlers', () => {
           {
             type: 'text',
             text: `Location Information for ${mockIp}:\n\n${mockFormattedData}`,
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       })
@@ -195,7 +193,7 @@ describe('Location Handlers', () => {
           {
             type: 'text',
             text: `Error: Invalid IP address format: ${invalidIp}`,
-            _meta: { stderr: 'Invalid IP address format', exitCode: 1 },
+            _meta: { stderr: 'Invalid IP address format' },
           },
         ],
       })
@@ -218,7 +216,7 @@ describe('Location Handlers', () => {
           {
             type: 'text',
             text: `Error getting location for IP ${mockIp}: ${errorMessage}`,
-            _meta: { stderr: errorMessage, exitCode: 1 },
+            _meta: { stderr: errorMessage },
           },
         ],
       })
@@ -251,7 +249,7 @@ describe('Location Handlers', () => {
           {
             type: 'text',
             text: `Error getting location for IP ${mockIp}: ${errorMessage}`,
-            _meta: { stderr: errorMessage, exitCode: 1 },
+            _meta: { stderr: errorMessage },
           },
         ],
       })
@@ -272,7 +270,7 @@ describe('Location Handlers', () => {
           {
             type: 'text',
             text: `Error getting location for IP ${mockIp}: Unknown error`,
-            _meta: { stderr: 'Unknown error', exitCode: 1 },
+            _meta: { stderr: 'Unknown error' },
           },
         ],
       })
@@ -292,7 +290,7 @@ describe('Location Handlers', () => {
           {
             type: 'text',
             text: 'Error: Invalid IP address format: ',
-            _meta: { stderr: 'Invalid IP address format', exitCode: 1 },
+            _meta: { stderr: 'Invalid IP address format' },
           },
         ],
       })
@@ -314,7 +312,7 @@ describe('Location Handlers', () => {
             {
               type: 'text',
               text: `Error: Invalid IP address format: ${ip}`,
-              _meta: { stderr: 'Invalid IP address format', exitCode: 1 },
+              _meta: { stderr: 'Invalid IP address format' },
             },
           ],
         })

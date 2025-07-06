@@ -38,7 +38,6 @@ export const currentDatetimeHandler = async ({ format = 'local' }): Promise<Call
         {
           type: 'text',
           text: output,
-          _meta: { stderr: '', exitCode: 0 },
         },
       ],
     }
@@ -51,7 +50,7 @@ export const currentDatetimeHandler = async ({ format = 'local' }): Promise<Call
         {
           type: 'text',
           text: `Error getting current datetime: ${errorMessage}`,
-          _meta: { stderr: errorMessage, exitCode: 1 },
+          _meta: { stderr: errorMessage },
         },
       ],
     }
@@ -81,7 +80,7 @@ export const fetchEventsHandler = async ({
           {
             type: 'text',
             text: 'Error: Start date must be before end date',
-            _meta: { stderr: 'Invalid date range', exitCode: 1 },
+            _meta: { stderr: 'Invalid date range' },
           },
         ],
       }
@@ -132,7 +131,6 @@ export const fetchEventsHandler = async ({
           {
             type: 'text',
             text: `No events found between ${startDate} and ${endDate}`,
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       }
@@ -197,7 +195,7 @@ export const fetchEventsHandler = async ({
         {
           type: 'text',
           text: output,
-          _meta: { stderr: errors.join('\n'), exitCode: errors.length > 0 ? 1 : 0 },
+          _meta: { stderr: errors.join('\n') },
         },
       ],
     }
@@ -210,7 +208,7 @@ export const fetchEventsHandler = async ({
         {
           type: 'text',
           text: `Error fetching calendar events: ${errorMessage}`,
-          _meta: { stderr: errorMessage, exitCode: 1 },
+          _meta: { stderr: errorMessage },
         },
       ],
     }

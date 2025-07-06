@@ -127,7 +127,6 @@ describe('Weather Handler', () => {
           {
             type: 'text',
             text: mockFormattedData,
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       })
@@ -152,7 +151,7 @@ describe('Weather Handler', () => {
           {
             type: 'text',
             text: `Error: Invalid coordinates. Latitude must be between -90 and 90, longitude must be between -180 and 180. Received: lat=${invalidLatitude}, lon=${validLongitude}`,
-            _meta: { stderr: 'Invalid coordinates', exitCode: 1 },
+            _meta: { stderr: 'Invalid coordinates' },
           },
         ],
       })
@@ -176,7 +175,7 @@ describe('Weather Handler', () => {
           {
             type: 'text',
             text: `Error getting weather data for coordinates ${latitude}, ${longitude}: ${errorMessage}`,
-            _meta: { stderr: errorMessage, exitCode: 1 },
+            _meta: { stderr: errorMessage },
           },
         ],
       })
@@ -205,7 +204,7 @@ describe('Weather Handler', () => {
           {
             type: 'text',
             text: `Error getting weather data for coordinates ${latitude}, ${longitude}: ${errorMessage}`,
-            _meta: { stderr: errorMessage, exitCode: 1 },
+            _meta: { stderr: errorMessage },
           },
         ],
       })
@@ -234,7 +233,7 @@ describe('Weather Handler', () => {
           {
             type: 'text',
             text: `Error getting weather data for coordinates ${latitude}, ${longitude}: ${errorMessage}`,
-            _meta: { stderr: errorMessage, exitCode: 1 },
+            _meta: { stderr: errorMessage },
           },
         ],
       })
@@ -256,7 +255,7 @@ describe('Weather Handler', () => {
           {
             type: 'text',
             text: `Error getting weather data for coordinates ${latitude}, ${longitude}: Unknown error`,
-            _meta: { stderr: 'Unknown error', exitCode: 1 },
+            _meta: { stderr: 'Unknown error' },
           },
         ],
       })
@@ -282,7 +281,7 @@ describe('Weather Handler', () => {
           {
             type: 'text',
             text: `Error: Invalid coordinates. Latitude must be between -90 and 90, longitude must be between -180 and 180. Received: lat=${lat}, lon=${lon}`,
-            _meta: { stderr: 'Invalid coordinates', exitCode: 1 },
+            _meta: { stderr: 'Invalid coordinates' },
           },
         ],
       })
@@ -306,7 +305,7 @@ describe('Weather Handler', () => {
       expect(isValidCoordinates).toHaveBeenCalledWith(latitude, longitude)
       expect(fetchWeatherData).toHaveBeenCalledWith(latitude, longitude)
       expect(result.content?.[0]?.text).toBe(mockFormattedData)
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
 
     it('should handle decimal coordinates', async () => {
@@ -327,7 +326,7 @@ describe('Weather Handler', () => {
       expect(isValidCoordinates).toHaveBeenCalledWith(latitude, longitude)
       expect(fetchWeatherData).toHaveBeenCalledWith(latitude, longitude)
       expect(result.content?.[0]?.text).toBe(mockFormattedData)
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
 
     it('should process weather data with combined precipitation format', async () => {
@@ -365,7 +364,7 @@ describe('Weather Handler', () => {
       expect(processWeatherData).toHaveBeenCalledWith(mockApiResponse)
       expect(formatWeatherData).toHaveBeenCalledWith(mockProcessedDataWithPrecip)
       expect(result.content?.[0]?.text).toBe(mockFormattedData)
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
   })
 })

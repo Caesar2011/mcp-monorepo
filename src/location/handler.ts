@@ -14,7 +14,6 @@ export const getCurrentLocationHandler = async (): Promise<CallToolResult> => {
         {
           type: 'text',
           text: `Current Location Information:\n\n${formattedData}`,
-          _meta: { stderr: '', exitCode: 0 },
         },
       ],
     }
@@ -25,7 +24,7 @@ export const getCurrentLocationHandler = async (): Promise<CallToolResult> => {
         {
           type: 'text',
           text: `Error getting current location: ${errorMessage}`,
-          _meta: { stderr: errorMessage, exitCode: 1 },
+          _meta: { stderr: errorMessage },
         },
       ],
     }
@@ -41,7 +40,7 @@ export const getLocationByIpHandler = async ({ ipAddress }: { ipAddress: string 
           {
             type: 'text',
             text: `Error: Invalid IP address format: ${ipAddress}`,
-            _meta: { stderr: 'Invalid IP address format', exitCode: 1 },
+            _meta: { stderr: 'Invalid IP address format' },
           },
         ],
       }
@@ -55,7 +54,6 @@ export const getLocationByIpHandler = async ({ ipAddress }: { ipAddress: string 
         {
           type: 'text',
           text: `Location Information for ${ipAddress}:\n\n${formattedData}`,
-          _meta: { stderr: '', exitCode: 0 },
         },
       ],
     }
@@ -66,7 +64,7 @@ export const getLocationByIpHandler = async ({ ipAddress }: { ipAddress: string 
         {
           type: 'text',
           text: `Error getting location for IP ${ipAddress}: ${errorMessage}`,
-          _meta: { stderr: errorMessage, exitCode: 1 },
+          _meta: { stderr: errorMessage },
         },
       ],
     }

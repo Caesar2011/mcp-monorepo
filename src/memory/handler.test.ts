@@ -94,7 +94,6 @@ describe('Memory Handlers', () => {
               {
                 type: 'text',
                 text: expect.stringContaining(`✅ ${displayName} memory stored successfully!`),
-                _meta: { stderr: '', exitCode: 0 },
               },
             ],
           })
@@ -150,7 +149,7 @@ describe('Memory Handlers', () => {
               {
                 type: 'text',
                 text: `❌ Error storing ${displayName} memory: ${errorMessage}`,
-                _meta: { stderr: errorMessage, exitCode: 1 },
+                _meta: { stderr: errorMessage },
               },
             ],
           })
@@ -171,7 +170,7 @@ describe('Memory Handlers', () => {
             _meta: { stderr: string; exitCode: number }
           }
           expect(textContent.text).toContain('String error')
-          expect(textContent._meta).toEqual({ stderr: 'String error', exitCode: 1 })
+          expect(textContent._meta).toEqual({ stderr: 'String error' })
         })
       })
     })
@@ -203,7 +202,6 @@ describe('Memory Handlers', () => {
           {
             type: 'text',
             text: expect.stringContaining('✅ Long-term memory removed successfully!'),
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       })
@@ -244,7 +242,7 @@ describe('Memory Handlers', () => {
           {
             type: 'text',
             text: '❌ Long-term memory with ID 999 not found',
-            _meta: { stderr: 'Memory ID 999 not found', exitCode: 1 },
+            _meta: { stderr: 'Memory ID 999 not found' },
           },
         ],
       })
@@ -271,7 +269,7 @@ describe('Memory Handlers', () => {
           {
             type: 'text',
             text: '❌ Failed to remove memory with ID 123',
-            _meta: { stderr: 'Delete operation failed for ID 123', exitCode: 1 },
+            _meta: { stderr: 'Delete operation failed for ID 123' },
           },
         ],
       })
@@ -290,7 +288,7 @@ describe('Memory Handlers', () => {
           {
             type: 'text',
             text: `❌ Error removing long-term memory: ${errorMessage}`,
-            _meta: { stderr: errorMessage, exitCode: 1 },
+            _meta: { stderr: errorMessage },
           },
         ],
       })
@@ -335,7 +333,6 @@ describe('Memory Handlers', () => {
           {
             type: 'text',
             text: expect.stringContaining('🔍 Found 2 memories matching "test"'),
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       })
@@ -355,7 +352,6 @@ describe('Memory Handlers', () => {
           {
             type: 'text',
             text: '🔍 No memories found matching keyword: "nonexistent"',
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       })
@@ -374,7 +370,7 @@ describe('Memory Handlers', () => {
           {
             type: 'text',
             text: `❌ Error searching memories: ${errorMessage}`,
-            _meta: { stderr: errorMessage, exitCode: 1 },
+            _meta: { stderr: errorMessage },
           },
         ],
       })
@@ -444,7 +440,6 @@ describe('Memory Handlers', () => {
           {
             type: 'text',
             text: expect.stringContaining('📝 All Memories (2 total)'),
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       })
@@ -467,7 +462,6 @@ describe('Memory Handlers', () => {
           {
             type: 'text',
             text: '📝 No memories stored yet',
-            _meta: { stderr: '', exitCode: 0 },
           },
         ],
       })
@@ -527,7 +521,7 @@ describe('Memory Handlers', () => {
           {
             type: 'text',
             text: `❌ Error retrieving memories: ${errorMessage}`,
-            _meta: { stderr: errorMessage, exitCode: 1 },
+            _meta: { stderr: errorMessage },
           },
         ],
       })

@@ -106,7 +106,6 @@ describe('Handler Functions', () => {
 
       expect(unlink).toHaveBeenCalledWith(normalize('/test/cwd/temp.diff'))
       expect(result.content?.[0]?.text).toContain('Error applying git diff')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
 
     it('should handle cleanup failure gracefully', async () => {
@@ -130,7 +129,7 @@ describe('Handler Functions', () => {
       expect(validatePath).toHaveBeenCalledWith('/test/cwd', 'test/file.txt')
       expect(rm).toHaveBeenCalledWith(resolve('/test/cwd', 'test/file.txt'), { recursive: true, force: true })
       expect(result.content?.[0]?.text).toContain('Successfully removed test/file.txt')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
 
     it('should reject paths outside working directory', async () => {
@@ -139,7 +138,6 @@ describe('Handler Functions', () => {
       const result = await rmHandler({ targetPath: '../outside/file.txt' })
 
       expect(result.content?.[0]?.text).toContain('Target path is outside working directory')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
       expect(rm).not.toHaveBeenCalled()
     })
 
@@ -150,7 +148,6 @@ describe('Handler Functions', () => {
       const result = await rmHandler({ targetPath: 'test/file.txt' })
 
       expect(result.content?.[0]?.text).toContain('Error removing target: Permission denied')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
   })
 
@@ -170,7 +167,7 @@ describe('Handler Functions', () => {
       expect(mkdir).toHaveBeenCalledWith(dirname(resolve('/test/cwd', 'dest/file.txt')), { recursive: true })
       expect(rename).toHaveBeenCalled()
       expect(result.content?.[0]?.text).toContain('Successfully moved')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
 
     it('should reject source path outside working directory', async () => {
@@ -182,7 +179,6 @@ describe('Handler Functions', () => {
       })
 
       expect(result.content?.[0]?.text).toContain('Source path is outside working directory')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
 
     it('should reject destination path outside working directory', async () => {
@@ -194,7 +190,6 @@ describe('Handler Functions', () => {
       })
 
       expect(result.content?.[0]?.text).toContain('Destination path is outside working directory')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
 
     it('should handle move errors', async () => {
@@ -208,7 +203,6 @@ describe('Handler Functions', () => {
       })
 
       expect(result.content?.[0]?.text).toContain('Error moving file: File not found')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
   })
 
@@ -222,7 +216,7 @@ describe('Handler Functions', () => {
       expect(validatePath).toHaveBeenCalledWith('/test/cwd', 'new/directory')
       expect(mkdir).toHaveBeenCalledWith(resolve('/test/cwd', 'new/directory'), { recursive: true })
       expect(result.content?.[0]?.text).toContain('Successfully created directory new/directory')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
 
     it('should reject paths outside working directory', async () => {
@@ -231,7 +225,6 @@ describe('Handler Functions', () => {
       const result = await mkdirHandler({ dirPath: '../outside' })
 
       expect(result.content?.[0]?.text).toContain('Directory path is outside working directory')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
       expect(mkdir).not.toHaveBeenCalled()
     })
 
@@ -242,7 +235,6 @@ describe('Handler Functions', () => {
       const result = await mkdirHandler({ dirPath: 'new/directory' })
 
       expect(result.content?.[0]?.text).toContain('Error creating directory: Permission denied')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
   })
 
@@ -257,7 +249,7 @@ describe('Handler Functions', () => {
       const result = await searchHandler({ pattern: '*.txt' })
 
       expect(result.content?.[0]?.text).toContain('Found files:\nfile1.txt\nfile2.txt')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
 
     it('should handle no matches', async () => {
@@ -268,7 +260,7 @@ describe('Handler Functions', () => {
       const result = await searchHandler({ pattern: '*.nonexistent' })
 
       expect(result.content?.[0]?.text).toContain('No files found matching pattern')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
 
     it('should handle security violation', async () => {
@@ -277,7 +269,6 @@ describe('Handler Functions', () => {
       const result = await searchHandler({ pattern: '*.txt' })
 
       expect(result.content?.[0]?.text).toContain('Current directory is outside working directory')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
   })
 
@@ -312,7 +303,6 @@ describe('Handler Functions', () => {
       const result = await lsHandler({ path: 'nonexistent' })
 
       expect(result.content?.[0]?.text).toContain('Error listing directory: Directory not found')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
   })
 
@@ -329,7 +319,7 @@ describe('Handler Functions', () => {
 
       expect(result.content?.[0]?.text).toContain('Directory tree (max depth: 3, showing 2 items)')
       expect(result.content?.[0]?.text).toContain('├── file1.txt')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
 
     it('should use default depth', async () => {
@@ -358,7 +348,6 @@ describe('Handler Functions', () => {
       const result = await treeHandler({ depth: 3 })
 
       expect(result.content?.[0]?.text).toContain('Current directory is outside working directory')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
   })
 
@@ -447,7 +436,6 @@ describe('Handler Functions', () => {
       })
 
       expect(result.content?.[0]?.text).toContain('File path is outside working directory')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
 
     it('should handle file read errors', async () => {
@@ -461,7 +449,6 @@ describe('Handler Functions', () => {
       })
 
       expect(result.content?.[0]?.text).toContain('Error processing file: File not found')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
   })
 
@@ -473,7 +460,7 @@ describe('Handler Functions', () => {
 
       expect(readFile).toHaveBeenCalledWith(resolve('/test/cwd', 'test.txt'), 'utf-8')
       expect(result.content?.[0]?.text).toContain('Content of test.txt:\n\nfile content here')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
 
     it('should handle file read errors', async () => {
@@ -482,7 +469,6 @@ describe('Handler Functions', () => {
       const result = await openHandler({ filePath: 'restricted.txt' })
 
       expect(result.content?.[0]?.text).toContain('Error reading file: Permission denied')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
   })
 
@@ -554,7 +540,7 @@ describe('Handler Functions', () => {
       expect(mkdir).toHaveBeenCalledWith(dirname(resolve('/test/cwd', 'dir/test.txt')), { recursive: true })
       expect(writeFile).toHaveBeenCalledWith(resolve('/test/cwd', 'dir/test.txt'), 'test content', 'utf-8')
       expect(result.content?.[0]?.text).toContain('Successfully wrote 12 characters to dir/test.txt')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(0)
+      expect(result.content?.[0]?._meta).toBe(undefined)
     })
 
     it('should reject paths outside working directory', async () => {
@@ -566,7 +552,6 @@ describe('Handler Functions', () => {
       })
 
       expect(result.content?.[0]?.text).toContain('File path is outside working directory')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
       expect(writeFile).not.toHaveBeenCalled()
     })
 
@@ -581,7 +566,6 @@ describe('Handler Functions', () => {
       })
 
       expect(result.content?.[0]?.text).toContain('Error writing file: Disk full')
-      expect(result.content?.[0]?._meta?.exitCode).toBe(1)
     })
 
     it('should handle empty content', async () => {

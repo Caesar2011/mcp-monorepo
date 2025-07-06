@@ -10,7 +10,7 @@ export const getGeocodingHandler = async ({ name }: { name: string }): Promise<C
           {
             type: 'text',
             text: 'Error: Location name cannot be empty.',
-            _meta: { stderr: 'Empty location name', exitCode: 1 },
+            _meta: { stderr: 'Empty location name' },
           },
         ],
       }
@@ -25,7 +25,6 @@ export const getGeocodingHandler = async ({ name }: { name: string }): Promise<C
         {
           type: 'text',
           text: formattedData,
-          _meta: { stderr: '', exitCode: 0 },
         },
       ],
     }
@@ -36,7 +35,7 @@ export const getGeocodingHandler = async ({ name }: { name: string }): Promise<C
         {
           type: 'text',
           text: `Error getting geocoding data for location "${name}": ${errorMessage}`,
-          _meta: { stderr: errorMessage, exitCode: 1 },
+          _meta: { stderr: errorMessage },
         },
       ],
     }

@@ -56,7 +56,7 @@ export const fetchWeatherData = async (latitude: number, longitude: number): Pro
       'temperature_2m,wind_speed_10m,precipitation_probability,precipitation,apparent_temperature,dew_point_2m',
     )
     url.searchParams.set('timezone', 'auto')
-    url.searchParams.set('forecast_hours', '19')
+    url.searchParams.set('forecast_hours', '24')
     url.searchParams.set('forecast_days', '10')
     const response = await fetch(url.toString())
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)

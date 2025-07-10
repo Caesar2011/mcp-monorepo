@@ -6,26 +6,17 @@ export const formatWeatherData = (data: ProcessedWeatherData): string => {
   result += `Coordinates: ${data.location.latitude}, ${data.location.longitude}\n`
   result += `Timezone: ${data.location.timezone} (${data.location.timezone_abbreviation})\n`
   result += `Elevation: ${data.location.elevation}m\n\n`
-  result += `Hourly Forecast (Next 19 hours):\n`
+  result += `Hourly Forecast (Next 24 hours):\n`
   result += `=====================================\n`
-  Object.entries(data.hourly).forEach(([time, hourlyData]) => {
-    result += `Time: ${time}\n`
-    result += ` Temperature: ${hourlyData.temperature_2m}\n`
-    result += ` Apparent Temperature: ${hourlyData.apparent_temperature}\n`
-    result += ` Wind Speed: ${hourlyData.wind_speed_10m}\n`
-    result += ` Precipitation: ${hourlyData.precipitation_combined}\n`
-    result += ` Dew Point: ${hourlyData.dew_point_2m}\n\n`
+  Object.entries(data.hourly).forEach(([time, h]) => {
+    result += `${time} | temp:${h.temperature_2m}°C, feels:${h.apparent_temperature}°C, wind:${h.wind_speed_10m}km/h, precip:${h.precipitation_combined}mm, dew:${h.dew_point_2m}°C\n`
   })
-  result += `Daily Forecast (Next 10 days):\n`
+  result += `\nDaily Forecast (Next 10 days):\n`
   result += `===============================\n`
-  Object.entries(data.daily).forEach(([date, dailyData]) => {
-    result += `Date: ${date}\n`
-    result += ` Sunrise: ${dailyData.sunrise}\n`
-    result += ` Sunset: ${dailyData.sunset}\n`
-    result += ` Max Temperature: ${dailyData.temperature_2m_max}\n`
-    result += ` Min Temperature: ${dailyData.temperature_2m_min}\n`
-    result += ` Precipitation: ${dailyData.precipitation_combined}\n`
-    result += ` Sunshine Duration: ${dailyData.sunshine_duration}\n\n`
+  Object.entries(data.daily).forEach(([date, d]) => {
+    const sunriseTime = d.sunrise.split('T')[1] || d.sunrise
+    const sunsetTime = d.sunset.split('T')[1] || d.sunset
+    result += `${date} | sunrise:${sunriseTime} sunset:${sunsetTime}, max:${d.temperature_2m_max}°C, min:${d.temperature_2m_min}°C, precip:${d.precipitation_combined}mm, sun:${d.sunshine_duration}\n`
   })
   return result.trim()
 }

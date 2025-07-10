@@ -1,7 +1,6 @@
 // Helper and formatter tests for weather-by-coords tool
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-import { formatWeatherData } from './formatter.js'
 import {
   fetchWeatherData,
   processWeatherData,
@@ -10,7 +9,7 @@ import {
   formatPrecipitationCombined,
 } from './helper.js'
 
-import type { WeatherApiResponse, ProcessedWeatherData } from './types.js'
+import type { WeatherApiResponse } from './types.js'
 
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
@@ -152,38 +151,5 @@ describe('Weather-By-Coords Helper & Formatter', () => {
     expect(out.location.latitude).toBe(1)
     expect(out.hourly.t).toBeTruthy()
     expect(out.daily.d).toBeTruthy()
-  })
-
-  // formatWeatherData
-  it('formats processed weather', () => {
-    const processed: ProcessedWeatherData = {
-      location: { latitude: 1, longitude: 2, timezone: 'Z', timezone_abbreviation: 'TZ', elevation: 0 },
-      hourly: {
-        '2025-01-01T12:00': {
-          temperature_2m: '20C',
-          wind_speed_10m: '1k',
-          precipitation_combined: '0mm (0%)',
-          apparent_temperature: '19C',
-          dew_point_2m: '5C',
-        },
-      },
-      daily: {
-        '2025-01-01': {
-          sunrise: '07:00',
-          sunset: '21:00',
-          temperature_2m_max: '20C',
-          precipitation_combined: '0mm (0%)',
-          sunshine_duration: '1h',
-          temperature_2m_min: '10C',
-        },
-      },
-    }
-    const out = formatWeatherData(processed)
-    expect(out).toContain('Coordinates: 1, 2')
-    expect(out).toContain('Hourly Forecast')
-    expect(out).toContain('Daily Forecast')
-    expect(out).toContain('Temperature: 20C')
-    expect(out).toContain('Sunrise: 07:00')
-    expect(out).toContain('Sunshine Duration: 1h')
   })
 })

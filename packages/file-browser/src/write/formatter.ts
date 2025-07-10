@@ -1,10 +1,15 @@
+import path from 'path'
+
+import { getWorkingDirectory } from '../lib/getWorkingDirectory.js'
+
 import type { WriteToolResult } from './types.js'
 
 // Main response formatting
 export const formatResponse = (data: WriteToolResult): string => {
   const action = data.created ? 'Created' : 'Overwritten'
-  const lines = [`${action} file: ${data.filePath}`, `Bytes written: ${data.bytesWritten}`]
-
+  // Always display relative to working directory
+  const relPath = path.relative(getWorkingDirectory(), data.filePath)
+  const lines = [`${action} file: ${relPath}`, `Bytes written: ${data.bytesWritten}`]
   return lines.join('\n')
 }
 

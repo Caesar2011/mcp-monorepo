@@ -1,10 +1,14 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 import { formatResponse, formatError } from './formatter.js'
+import * as getWorkingDirectoryModule from '../lib/getWorkingDirectory.js'
 
 import type { WriteToolResult } from './types.js'
 
 describe('formatResponse', () => {
+  beforeEach(() => {
+    vi.spyOn(getWorkingDirectoryModule, 'getWorkingDirectory').mockReturnValue('/working/dir')
+  })
   it('should format successful file creation', () => {
     const data: WriteToolResult = {
       filePath: '/working/dir/test.txt',
@@ -14,7 +18,7 @@ describe('formatResponse', () => {
 
     const result = formatResponse(data)
 
-    expect(result).toBe('Created file: /working/dir/test.txt\nBytes written: 11')
+    expect(result).toBe('Created file: test.txt\nBytes written: 11')
   })
 
   it('should format successful file overwrite', () => {
@@ -26,7 +30,7 @@ describe('formatResponse', () => {
 
     const result = formatResponse(data)
 
-    expect(result).toBe('Overwritten file: /working/dir/existing.txt\nBytes written: 25')
+    expect(result).toBe('Overwritten file: existing.txt\nBytes written: 25')
   })
 
   it('should format zero-byte file creation', () => {
@@ -38,7 +42,7 @@ describe('formatResponse', () => {
 
     const result = formatResponse(data)
 
-    expect(result).toBe('Created file: /working/dir/empty.txt\nBytes written: 0')
+    expect(result).toBe('Created file: empty.txt\nBytes written: 0')
   })
 
   it('should format large file creation', () => {
@@ -50,7 +54,7 @@ describe('formatResponse', () => {
 
     const result = formatResponse(data)
 
-    expect(result).toBe('Created file: /working/dir/large.txt\nBytes written: 1048576')
+    expect(result).toBe('Created file: large.txt\nBytes written: 1048576')
   })
 
   it('should handle paths with special characters', () => {
@@ -62,7 +66,7 @@ describe('formatResponse', () => {
 
     const result = formatResponse(data)
 
-    expect(result).toBe('Overwritten file: /working/dir/file with spaces & symbols.txt\nBytes written: 42')
+    expect(result).toBe('Overwritten file: file with spaces & symbols.txt\nBytes written: 42')
   })
 })
 

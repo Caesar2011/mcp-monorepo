@@ -1,38 +1,31 @@
 {
-  "name": "costum-mcp",
+  "name": "mcp-monorepo",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "dev": "tsc -w",
-    "dev:tmp": "tsc-watch --onSuccess \"node dist/tmp.js Privat=https://next.sebse.de/remote.php/dav/public-calendars/QNseCK7pcFzk6T85?export Arbeit=https://outlook.office365.com/owa/calendar/6726b109005640a4982f52968f443e51@netlight.com/840711b63b9c446a89efbac67588c7a812184317992758283667/S-1-8-1012071154-1048752624-2164084980-293329427/reachcalendar.ics\"",
-    "run-once": "tsc && node dist/tmp.js C:\\Users\\A1EDFD7\\Downloads\\chatmcp-0.0.69-windows\\mcps\\costum-mcp",
+    "build": "tsc -b",
+    "build:workspaces": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces",
+    "test": "npm run test --workspaces",
+    "test:watch": "npm run test:watch --workspaces",
+    "test:coverage": "npm run test:coverage --workspaces",
     "lint:prettier": "prettier --write .",
     "lint:eslint": "eslint --cache . --fix",
     "lint": "npm run lint:prettier && npm run lint:eslint",
     "lint-staged": "lint-staged",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "typecheck": "npm run typecheck --workspaces",
     "prepare": "husky",
-    "test": "vitest run",
-    "test:watch": "vitest",
-    "test:ui": "vitest --ui",
-    "test:coverage": "vitest run --coverage"
+    "clean": "npm run clean --workspaces"
   },
   "author": "",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.13.2",
-    "better-sqlite3": "^12.2.0",
-    "date-fns-tz": "^3.2.0",
-    "micromatch": "^4.0.8",
-    "node-ical": "^0.20.1",
-    "zod": "^3.25.74"
-  },
+  "description": "MCP Tools Monorepo with TypeScript support",
   "devDependencies": {
     "@eslint/js": "^9.29.0",
-    "@types/better-sqlite3": "^7.6.13",
-    "@types/micromatch": "^4.0.9",
     "@types/node": "^22.14.1",
     "@typescript-eslint/eslint-plugin": "^8.34.0",
     "eslint": "^9.24.0",
@@ -41,6 +34,7 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-unused-imports": "^4.1.4",
     "husky": "^9.1.7",
+    "jest": "^29.7.0",
     "lint-staged": "^16.1.2",
     "prettier": "^3.5.3",
     "tsc-watch": "^7.1.1",
@@ -53,5 +47,9 @@
       "prettier --write",
       "eslint --fix"
     ]
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.2.0",
+    "ignore": "^7.0.5"
   }
 }

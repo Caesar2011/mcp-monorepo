@@ -11,5 +11,10 @@ export default defineConfig({
     onStackTrace: (_, { file }) => {
       return !file.includes('node_modules')
     },
+    projects: [
+      {
+        root: './src',
+      },
+    ],
   },
 })

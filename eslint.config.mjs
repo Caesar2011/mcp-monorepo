@@ -1,8 +1,8 @@
 import eslint from '@eslint/js'
-import tseslint from 'typescript-eslint'
 import eslintConfigPrettier from 'eslint-config-prettier/flat'
 import eslintPluginImport from 'eslint-plugin-import'
 import eslintPluginUnusedImports from 'eslint-plugin-unused-imports'
+import tseslint from 'typescript-eslint'
 
 export default tseslint.config(
   {
@@ -23,8 +23,6 @@ export default tseslint.config(
     },
   },
   {
-    // Apply rules specifically to TypeScript files in the backend source.
-    files: ['./src/**/*.{ts}'],
     plugins: {
       import: eslintPluginImport,
       'unused-imports': eslintPluginUnusedImports,

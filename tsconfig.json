@@ -1,21 +1,15 @@
 {
-  "compilerOptions": {
-    "module": "node16",
-    "moduleResolution": "node16",
-    "moduleDetection": "force",
-    "target": "esnext",
-    "strict": true,
-
-    // Additional strict checks
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "forceConsistentCasingInFileNames": true,
-
-    "outDir": "dist"
-  },
-  "include": ["src/**/*"]
+ "extends": "./tsconfig.base.json",
+ "compilerOptions": {
+ "noEmit": true
+ },
+ "include": [],
+ "references": [
+   { "path": "./packages/file-browser" },
+   { "path": "./packages/ics" },
+   { "path": "./packages/location" },
+   { "path": "./packages/memory" },
+   { "path": "./packages/npm" },
+   { "path": "./packages/weather" }
+ ]
 }

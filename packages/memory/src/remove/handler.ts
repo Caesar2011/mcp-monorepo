@@ -1,27 +1,27 @@
-import { findLongTermMemoryById, deleteLongTermMemoryById } from './helper.js'
+import { findMemoryById, deleteMemoryById } from './helper.js'
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 
-export const removeLongTermMemoryHandler = async (params: { id: number }): Promise<CallToolResult> => {
+export const removeMemoryHandler = async (params: { id: number }): Promise<CallToolResult> => {
   try {
-    const found = findLongTermMemoryById(params.id)
+    const found = findMemoryById(params.id)
     if (!found) {
       return {
         content: [
           {
             type: 'text',
-            text: `❌ No long-term memory found with ID ${params.id}`,
+            text: `❌ No memory found with ID ${params.id}`,
           },
         ],
       }
     }
-    const deleted = deleteLongTermMemoryById(params.id)
+    const deleted = deleteMemoryById(params.id)
     if (!deleted) {
       return {
         content: [
           {
             type: 'text',
-            text: `❌ Failed to delete long-term memory with ID ${params.id}`,
+            text: `❌ Failed to delete memory with ID ${params.id}`,
           },
         ],
       }
@@ -30,7 +30,7 @@ export const removeLongTermMemoryHandler = async (params: { id: number }): Promi
       content: [
         {
           type: 'text',
-          text: `✅ Successfully removed long-term memory with ID ${params.id}`,
+          text: `✅ Successfully removed memory with ID ${params.id}`,
         },
       ],
     }
@@ -40,7 +40,7 @@ export const removeLongTermMemoryHandler = async (params: { id: number }): Promi
       content: [
         {
           type: 'text',
-          text: `❌ Error removing long-term memory: ${message}`,
+          text: `❌ Error removing memory: ${message}`,
           _meta: { stderr: message },
         },
       ],

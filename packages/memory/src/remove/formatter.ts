@@ -1,4 +1,4 @@
-// Formatter for remove-long-term operation
+// Formatter for remove operation
 
 export function formatRemoveLongTermResult(id: number, content: string, category: string | null): string {
   return (

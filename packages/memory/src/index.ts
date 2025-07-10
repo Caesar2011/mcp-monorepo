@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 import { registerGetAllMemoriesTool } from './get-all-memories/index.js'
-import { registerRemoveLongTermMemoryTool } from './remove-long-term/index.js'
+import { registerRemoveMemoryTool } from './remove/index.js'
 import { registerSearchMemoriesTool } from './search-memories/index.js'
 import { registerStoreLongTermMemoryTool } from './store-long-term/index.js'
 import { registerStoreMidTermMemoryTool } from './store-mid-term/index.js'
@@ -12,13 +12,13 @@ const server = new McpServer({
   name: 'memory-mcp-server',
   version: '1.0.0',
   description:
-    'A comprehensive memory management system that automatically stores and retrieves personal preferences, decisions, moods, and plans across different time horizons. Short-term memories (7 days) capture moods and immediate decisions, mid-term memories (3 months) store plans and evolving preferences, while long-term memories preserve personal preferences indefinitely. Every decision you make should be stored automatically, even without explicitly asking. This tool distinguishes between memories (personal preferences, plans, moods - both personal and business) and tasks (concrete action points).',
+    'A comprehensive memory management system that automatically stores and retrieves personal preferences, decisions, moods, and plans across different time horizons. Short-term memories (7 days) capture moods and immediate decisions, mid-term memories (3 months) store plans and evolving preferences, while long-term memories preserve personal preferences indefinitely. Every decision you make must be stored automatically, even without explicitly asking. This tool distinguishes between memories (personal preferences, plans, moods - both personal and business) and tasks (concrete action points).',
 })
 
 registerStoreShortTermMemoryTool(server)
 registerStoreMidTermMemoryTool(server)
 registerStoreLongTermMemoryTool(server)
-registerRemoveLongTermMemoryTool(server)
+registerRemoveMemoryTool(server)
 registerSearchMemoriesTool(server)
 registerGetAllMemoriesTool(server)
 

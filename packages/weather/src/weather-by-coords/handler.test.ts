@@ -68,7 +68,8 @@ describe('weatherByCoordsHandler', () => {
       location: {},
       hourly: {},
       daily: {},
-    } as ProcessedWeatherData)
+      units: { hourly: {}, daily: {} },
+    } as unknown as ProcessedWeatherData)
     vi.spyOn(formatter, 'formatWeatherData').mockReturnValue('formattedWeather!')
     const out = await weatherByCoordsHandler({ latitude: 52, longitude: 13 })
     expect(out.content[0]?.text).toBe('formattedWeather!')

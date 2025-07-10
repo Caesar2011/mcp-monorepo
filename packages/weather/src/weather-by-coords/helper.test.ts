@@ -1,6 +1,7 @@
 // Helper and formatter tests for weather-by-coords tool
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
+import { formatWeatherData } from './formatter.js'
 import {
   fetchWeatherData,
   processWeatherData,
@@ -9,7 +10,7 @@ import {
   formatPrecipitationCombined,
 } from './helper.js'
 
-import type { WeatherApiResponse } from './types.js'
+import type { WeatherApiResponse, ProcessedWeatherData } from './types.js'
 
 const mockFetch = vi.fn()
 vi.stubGlobal('fetch', mockFetch)
@@ -151,5 +152,63 @@ describe('Weather-By-Coords Helper & Formatter', () => {
     expect(out.location.latitude).toBe(1)
     expect(out.hourly.t).toBeTruthy()
     expect(out.daily.d).toBeTruthy()
+  })
+
+  // End-to-end formatted output (formatter)
+  it('formats processed weather with compact output and correct units', () => {
+    const processed: ProcessedWeatherData = {
+      location: {
+        latitude: 1,
+        longitude: 2,
+        timezone: 'T',
+        timezone_abbreviation: 'TZ',
+        elevation: 10,
+      },
+      hourly: {
+        '2025-01-01T12:00': {
+          temperature_2m: 20,
+          apparent_temperature: 19,
+          wind_speed_10m: 12,
+          precipitation: 0.2,
+          precipitation_probability: 73,
+          dew_point_2m: 5,
+        },
+      },
+      daily: {
+        '2025-01-01': {
+          sunrise: '2025-01-01T07:00',
+          sunset: '2025-01-01T21:00',
+          temperature_2m_max: 20,
+          temperature_2m_min: 10,
+          precipitation_sum: 0,
+          precipitation_probability_max: 0,
+          sunshine_duration: '1h',
+        },
+      },
+      units: {
+        hourly: {
+          temperature_2m: '°C',
+          wind_speed_10m: 'km/h',
+          precipitation_probability: '%',
+          precipitation: 'mm',
+          apparent_temperature: '°C',
+          dew_point_2m: '°C',
+          time: 'iso8601',
+        },
+        daily: {
+          temperature_2m_max: '°C',
+          temperature_2m_min: '°C',
+          precipitation_sum: 'mm',
+          precipitation_probability_max: '%',
+          sunrise: 'iso8601',
+          sunset: 'iso8601',
+          sunshine_duration: 's',
+          time: 'iso8601',
+        },
+      },
+    }
+    const out = formatWeatherData(processed)
+    expect(out).toContain('2025-01-01T12:00 | temp:20°C, feels:19°C, wind:12km/h, precip:0.2mm (73%), dew:5°C')
+    expect(out).toContain('2025-01-01 | sunrise:07:00 sunset:21:00, max:20°C, min:10°C, precip:0mm (0%), sun:1h')
   })
 })

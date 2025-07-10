@@ -9,14 +9,24 @@ export const formatWeatherData = (data: ProcessedWeatherData): string => {
   result += `Hourly Forecast (Next 24 hours):\n`
   result += `=====================================\n`
   Object.entries(data.hourly).forEach(([time, h]) => {
-    result += `${time} | temp:${h.temperature_2m}°C, feels:${h.apparent_temperature}°C, wind:${h.wind_speed_10m}km/h, precip:${h.precipitation_combined}mm, dew:${h.dew_point_2m}°C\n`
+    const u = data.units.hourly
+    const precipStr =
+      h.precipitation !== undefined
+        ? `precip:${h.precipitation}${u.precipitation}${h.precipitation_probability !== undefined ? ` (${h.precipitation_probability}${u.precipitation_probability})` : ''}`
+        : ''
+    result += `${time} | temp:${h.temperature_2m}${u.temperature_2m}, feels:${h.apparent_temperature}${u.apparent_temperature}, wind:${h.wind_speed_10m}${u.wind_speed_10m}, ${precipStr}, dew:${h.dew_point_2m}${u.dew_point_2m}\n`
   })
   result += `\nDaily Forecast (Next 10 days):\n`
   result += `===============================\n`
   Object.entries(data.daily).forEach(([date, d]) => {
+    const u = data.units.daily
     const sunriseTime = d.sunrise.split('T')[1] || d.sunrise
     const sunsetTime = d.sunset.split('T')[1] || d.sunset
-    result += `${date} | sunrise:${sunriseTime} sunset:${sunsetTime}, max:${d.temperature_2m_max}°C, min:${d.temperature_2m_min}°C, precip:${d.precipitation_combined}mm, sun:${d.sunshine_duration}\n`
+    const precipStr =
+      d.precipitation_sum !== undefined
+        ? `precip:${d.precipitation_sum}${u.precipitation_sum}${d.precipitation_probability_max !== undefined ? ` (${d.precipitation_probability_max}${u.precipitation_probability_max})` : ''}`
+        : ''
+    result += `${date} | sunrise:${sunriseTime} sunset:${sunsetTime}, max:${d.temperature_2m_max}${u.temperature_2m_max}, min:${d.temperature_2m_min}${u.temperature_2m_min}, ${precipStr}, sun:${d.sunshine_duration}\n`
   })
   return result.trim()
 }

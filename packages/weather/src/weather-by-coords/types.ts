@@ -53,20 +53,22 @@ export interface WeatherApiResponse {
 }
 
 export interface HourlyWeatherData {
-  temperature_2m: string
-  wind_speed_10m: string
-  precipitation_combined: string
-  apparent_temperature: string
-  dew_point_2m: string
+  temperature_2m: number
+  wind_speed_10m: number
+  precipitation: number
+  precipitation_probability?: number
+  apparent_temperature: number
+  dew_point_2m: number
 }
 
 export interface DailyWeatherData {
   sunrise: string
   sunset: string
-  temperature_2m_max: string
-  precipitation_combined: string
-  sunshine_duration: string
-  temperature_2m_min: string
+  temperature_2m_max: number
+  temperature_2m_min: number
+  precipitation_sum: number
+  precipitation_probability_max?: number
+  sunshine_duration: string | number
 }
 
 export interface ProcessedWeatherData {
@@ -79,4 +81,8 @@ export interface ProcessedWeatherData {
   }
   hourly: Record<string, HourlyWeatherData>
   daily: Record<string, DailyWeatherData>
+  units: {
+    hourly: WeatherApiResponse['hourly_units']
+    daily: WeatherApiResponse['daily_units']
+  }
 }

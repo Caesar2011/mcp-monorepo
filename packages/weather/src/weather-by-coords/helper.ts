@@ -1,5 +1,5 @@
 // Business logic for weather-by-coords tool
-import type { WeatherApiResponse, ProcessedWeatherData } from './types.js'
+import type { WeatherApiResponse, ProcessedWeatherData, HourlyWeatherData, DailyWeatherData } from './types.js'
 
 export const formatSunshineDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600)
@@ -26,22 +26,6 @@ export const isValidCoordinates = (latitude: number, longitude: number): boolean
   !isNaN(latitude) &&
   !isNaN(longitude)
 
-type HourlyDatum = {
-  temperature_2m: string
-  wind_speed_10m: string
-  precipitation_combined: string
-  apparent_temperature: string
-  dew_point_2m: string
-}
-type DailyDatum = {
-  sunrise: string
-  sunset: string
-  temperature_2m_max: string
-  precipitation_combined: string
-  sunshine_duration: string
-  temperature_2m_min: string
-}
-
 export const fetchWeatherData = async (latitude: number, longitude: number): Promise<WeatherApiResponse> => {
   try {
     const url = new URL('https://api.open-meteo.com/v1/forecast')
@@ -67,35 +51,27 @@ export const fetchWeatherData = async (latitude: number, longitude: number): Pro
 }
 
 export const processWeatherData = (data: WeatherApiResponse): ProcessedWeatherData => {
-  const hourlyData: Record<string, HourlyDatum> = {}
+  const hourlyData: Record<string, HourlyWeatherData> = {}
   data.hourly.time.forEach((time, i) => {
     hourlyData[time] = {
-      temperature_2m: `${data.hourly.temperature_2m[i]}${data.hourly_units.temperature_2m}`,
-      wind_speed_10m: `${data.hourly.wind_speed_10m[i]}${data.hourly_units.wind_speed_10m}`,
-      precipitation_combined: formatPrecipitationCombined(
-        data.hourly.precipitation?.[i] ?? 0,
-        data.hourly.precipitation_probability?.[i] ?? 0,
-        data.hourly_units.precipitation,
-        data.hourly_units.precipitation_probability,
-      ),
-      apparent_temperature: `${data.hourly.apparent_temperature[i]}${data.hourly_units.apparent_temperature}`,
-      dew_point_2m: `${data.hourly.dew_point_2m[i]}${data.hourly_units.dew_point_2m}`,
+      temperature_2m: data.hourly.temperature_2m[i],
+      wind_speed_10m: data.hourly.wind_speed_10m[i],
+      precipitation: data.hourly.precipitation?.[i] ?? 0,
+      precipitation_probability: data.hourly.precipitation_probability?.[i] ?? 0,
+      apparent_temperature: data.hourly.apparent_temperature[i],
+      dew_point_2m: data.hourly.dew_point_2m[i],
     }
   })
-  const dailyData: Record<string, DailyDatum> = {}
+  const dailyData: Record<string, DailyWeatherData> = {}
   data.daily.time.forEach((date, i) => {
     dailyData[date] = {
       sunrise: data.daily.sunrise[i] ?? '',
       sunset: data.daily.sunset[i] ?? '',
-      temperature_2m_max: `${data.daily.temperature_2m_max[i]}${data.daily_units.temperature_2m_max}`,
-      precipitation_combined: formatPrecipitationCombined(
-        data.daily.precipitation_sum?.[i] ?? 0,
-        data.daily.precipitation_probability_max[i] ?? 0,
-        data.daily_units.precipitation_sum,
-        data.daily_units.precipitation_probability_max,
-      ),
+      temperature_2m_max: data.daily.temperature_2m_max[i],
+      precipitation_sum: data.daily.precipitation_sum?.[i] ?? 0,
+      precipitation_probability_max: data.daily.precipitation_probability_max?.[i] ?? 0,
       sunshine_duration: formatSunshineDuration(data.daily.sunshine_duration?.[i] ?? 0),
-      temperature_2m_min: `${data.daily.temperature_2m_min[i]}${data.daily_units.temperature_2m_min}`,
+      temperature_2m_min: data.daily.temperature_2m_min[i],
     }
   })
   return {
@@ -108,5 +84,9 @@ export const processWeatherData = (data: WeatherApiResponse): ProcessedWeatherDa
     },
     hourly: hourlyData,
     daily: dailyData,
+    units: {
+      hourly: data.hourly_units,
+      daily: data.daily_units,
+    },
   }
 }

@@ -15,69 +15,7 @@ MCP (Model Context Protocol) server development project with TypeScript. This pr
 
 MCP projects follow a monorepo structure with individual packages for each MCP implementation.
 
-### Migration Strategy
-
-- **Legacy modules**: Currently located in `./src/<mcp-name>` (flat structure)
-- **New modules**: All new projects and migrated modules go to `./packages/<mcp-name>/src`
-- Each MCP is an independent package within the monorepo
-
-### Legacy Structure (./src/<mcp-name>/)
-
-Current legacy modules follow this flat structure:
-
-```
-src/
-└── <mcp-name>/
- ├── index.ts # Tool registration & MCP server setup & transport
- ├── handler.ts # All tool callbacks combined
- ├── handler.test.ts # Handler tests
- ├── helpers.ts # Business logic & formatting mixed together
- └── helpers.test.ts # Helper tests
-```
-
-**Legacy File Contents:**
-
-**`index.ts`** (Legacy)
-
-```typescript
-// MCP server creation
-export const server = new McpServer({...})
-
-// Multiple tool registrations in one file
-server.registerTool('tool-1', {...}, handler1)
-server.registerTool('tool-2', {...}, handler2)
-
-// Transport setup
-const transport = new StdioServerTransport()
-server.connect(transport)
-
-// Process handlers
-process.on('SIGINT', ...)
-```
-
-**`handler.ts`** (Legacy)
-
-```typescript
-// Multiple handlers in one file
-export const handler1 = async (params) => {
-  // Calls helpers, returns CallToolResult
-}
-
-export const handler2 = async (params) => {
-  // Calls helpers, returns CallToolResult
-}
-```
-
-**`helpers.ts`** (Legacy)
-
-```typescript
-// Mixed business logic and formatting
-export const fetchData = async () => {...} // Business logic
-export const validateInput = () => {...} // Business logic
-export const formatOutput = () => {...} // Formatting logic
-```
-
-### New Package Structure
+### Package Structure
 
 ```
 packages/
@@ -97,7 +35,7 @@ packages/
 
 #### MCP Level (`./packages/<mcp-name>/src/`)
 
-**`index.ts`** (New Structure)
+**`index.ts`**
 
 ```typescript
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'

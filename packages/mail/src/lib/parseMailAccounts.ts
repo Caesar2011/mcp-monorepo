@@ -1,4 +1,4 @@
-// Shared parseMailAccounts for mail tools (mark-as-seen, latest-mails)
+// Shared parseMailAccounts for mail tools (mark-as-seen, fetch-latest-mails)
 import type { AccountCredentials } from '../mark-as-seen/types.js'
 
 /**

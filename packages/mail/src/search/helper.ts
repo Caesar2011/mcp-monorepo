@@ -4,7 +4,7 @@ import { ImapFlow, type SearchObject } from 'imapflow'
 import { parseMailAccounts } from '../lib/parseMailAccounts.js'
 
 import type { SearchMailParams, SearchMailEntry, SearchMailAccountResult } from './types.js'
-import type { AccountCredentials } from '../latest-mails/types.js'
+import type { AccountCredentials } from '../fetch-latest-mails/types.js'
 
 function normalizeParams(params: SearchMailParams): SearchMailParams {
   return {

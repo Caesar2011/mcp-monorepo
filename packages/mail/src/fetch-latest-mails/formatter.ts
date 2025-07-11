@@ -1,4 +1,4 @@
-// Output formatting for latest-mails tool
+// Output formatting for fetch-latest-mails tool
 import type { MailAccountResult, MailEntry } from './types.js'
 
 // Formats a single mail entry

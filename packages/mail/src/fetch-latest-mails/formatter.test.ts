@@ -1,4 +1,4 @@
-// Tests for latest-mails formatter
+// Tests for fetch-latest-mails formatter
 import { describe, it, expect } from 'vitest'
 
 import { formatResponse, formatError } from './formatter.js'

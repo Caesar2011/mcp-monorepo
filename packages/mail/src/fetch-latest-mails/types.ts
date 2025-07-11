@@ -1,4 +1,4 @@
-// Types for latest-mails tool
+// Types for fetch-latest-mails tool
 export interface AccountCredentials {
   user: string
   pass: string

@@ -1,14 +1,10 @@
 // types.ts for mail search tool
-import type { MailAddress } from '../latest-mails/types.js'
+import type { MailAddress } from '../fetch-latest-mails/types.js'
 
 export interface SearchMailParams {
   searchString?: string
   searchBody?: boolean
   fromContains?: string
-}
-
-export interface NormalizedSearchMailParams extends SearchMailParams {
-  searchBody: boolean
 }
 
 export interface SearchMailEntry {

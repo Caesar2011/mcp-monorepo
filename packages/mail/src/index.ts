@@ -2,7 +2,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
-import { registerLatestMailsTool } from './latest-mails/index.js'
+import { registerFetchLatestMailsTool } from './fetch-latest-mails/index.js'
 import { registerMarkAsSeenTool } from './mark-as-seen/index.js'
 import { registerReadMailTool } from './read-mail/index.js'
 import { registerSearchTool } from './search/index.js'
@@ -13,7 +13,7 @@ export const server = new McpServer({
   description: 'MCP server for accessing and querying latest mails from IMAP accounts.',
 })
 
-registerLatestMailsTool(server)
+registerFetchLatestMailsTool(server)
 registerMarkAsSeenTool(server)
 registerReadMailTool(server)
 registerSearchTool(server)

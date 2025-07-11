@@ -1,4 +1,4 @@
-// Tests for latest-mails/helper.ts
+// Tests for fetch-latest-mails/helper.ts (search-based)
 import { type FetchMessageObject, type MessageAddressObject } from 'imapflow'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
@@ -12,10 +12,12 @@ const mockLogout = vi.fn()
 const mockGetMailboxLock = vi.fn()
 const mockRelease = vi.fn()
 const mockFetch = vi.fn()
+const mockSearch = vi.fn()
 const IMAP_MOCK = {
   connect: mockConnect,
   getMailboxLock: mockGetMailboxLock,
   fetch: mockFetch,
+  search: mockSearch,
   logout: mockLogout,
 }
 
@@ -69,12 +71,13 @@ describe('fetchMailsForAccount', () => {
     const mailToday = makeEnvelope({ subject: 'Today', date: new Date() })
     // yesterday
     const mailYesterday = makeEnvelope({ subject: 'Yesterday', date: new Date(Date.now() - 24 * 60 * 60 * 1000) })
-    // 2 days ago (should be filtered)
-    const mailOld = makeEnvelope({ subject: 'Old', date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) })
+
+    // Only return 'today' and 'yesterday' uids in search
+    mockSearch.mockResolvedValue([123, 124]) // simulate UID 123 (today), 124 (yesterday)
+    // fetch yields matching messages only
     mockFetch.mockImplementation(async function* () {
-      yield mailToday
-      yield mailYesterday
-      yield mailOld
+      yield { ...mailToday, uid: 123 }
+      yield { ...mailYesterday, uid: 124 }
     })
     const result = await fetchMailsForAccount(baseAccount)
     expect(result.mails.length).toBe(2)
@@ -85,11 +88,16 @@ describe('fetchMailsForAccount', () => {
     expect(mockConnect).toHaveBeenCalled()
     expect(mockLogout).toHaveBeenCalled()
     expect(mockRelease).toHaveBeenCalled()
+    expect(mockSearch).toHaveBeenCalled()
+    // Should search with 'since' param
+    const searchQuery = mockSearch.mock.calls[0][0]
+    expect(searchQuery).toHaveProperty('since')
   })
 
   it('handles mail with missing from or subject', async () => {
+    mockSearch.mockResolvedValue([125])
     mockFetch.mockImplementation(async function* () {
-      yield makeEnvelope({ from: undefined, subject: undefined })
+      yield makeEnvelope({ from: undefined, subject: undefined, uid: 125 })
     })
     const result = await fetchMailsForAccount(baseAccount)
     expect(result.mails[0].from).toEqual({ address: undefined, name: undefined })
@@ -97,14 +105,15 @@ describe('fetchMailsForAccount', () => {
   })
 
   it('returns empty list if no mails', async () => {
-    mockFetch.mockImplementation(async function* () {})
+    mockSearch.mockResolvedValue([])
     const result = await fetchMailsForAccount(baseAccount)
     expect(result.mails).toEqual([])
   })
 
   it('skips mail with envelope.date missing', async () => {
+    mockSearch.mockResolvedValue([126])
     mockFetch.mockImplementation(async function* () {
-      yield { envelope: { date: undefined }, uid: 1, flags: [] }
+      yield { envelope: { date: undefined }, uid: 126, flags: [] }
     })
     const result = await fetchMailsForAccount(baseAccount)
     expect(result.mails).toEqual([])
@@ -117,6 +126,7 @@ describe('fetchMailsForAccount', () => {
   })
 
   it('throws and logs out on fetch error', async () => {
+    mockSearch.mockResolvedValue([127])
     mockFetch.mockImplementation(() => {
       throw new Error('fail fetch')
     })
@@ -130,8 +140,11 @@ describe('fetchLatestMails', () => {
   it('handles multiple accounts successfully', async () => {
     process.env.MAIL_ACCOUNTS = 'user1:pw1@mail1:993 user2:pw2@mail2:993'
     let call = 0
+    mockSearch.mockImplementation(() => {
+      return [123 + call++]
+    })
     mockFetch.mockImplementation(async function* () {
-      yield makeEnvelope({ subject: `Mail${++call}` })
+      yield makeEnvelope({ subject: `Mail${call}`, uid: 123 + call })
     })
     const results = await fetchLatestMails()
     expect(results).toHaveLength(2)
@@ -144,9 +157,12 @@ describe('fetchLatestMails', () => {
   it('handles account error and continues', async () => {
     process.env.MAIL_ACCOUNTS = 'user1:pw1@mail1:993 user2:pw2@mail2:993'
     let call = 0
-    mockFetch.mockImplementation(async function* () {
+    mockSearch.mockImplementation(() => {
       if (++call === 1) throw new Error('fail1')
-      yield makeEnvelope({ subject: `Mail${call}` })
+      return [125]
+    })
+    mockFetch.mockImplementation(async function* () {
+      yield makeEnvelope({ subject: `Mail${call}`, uid: 125 })
     })
     // Patch fetchMailsForAccount to throw on first, succeed on second
     const orig = fetchMailsForAccount

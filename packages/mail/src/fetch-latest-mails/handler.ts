@@ -1,4 +1,4 @@
-// Handler for latest-mails tool
+// Handler for fetch-latest-mails tool
 import { formatResponse, formatError } from './formatter.js'
 import { fetchLatestMails } from './helper.js'
 

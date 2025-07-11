@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 import { registerRememberAllMemoriesTool } from './remember-all-memories/index.js'
-import { registerRemoveMemoryTool } from './remove/index.js'
+import { registerRemoveMemoryTool } from './remove-memory/index.js'
 import { registerSearchMemoriesTool } from './search-memories/index.js'
 import { registerStoreLongTermMemoryTool } from './store-long-term/index.js'
 import { registerStoreMidTermMemoryTool } from './store-mid-term/index.js'

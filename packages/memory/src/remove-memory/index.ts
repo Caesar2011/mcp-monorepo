@@ -10,7 +10,7 @@ const RemoveSchema = {
 
 export function registerRemoveMemoryTool(server: McpServer) {
   server.registerTool(
-    'remove',
+    'remove-memory',
     {
       title: 'Remove Memory',
       description: 'Remove memory entry by its ID. Works for long, mid, and short-term memories.',

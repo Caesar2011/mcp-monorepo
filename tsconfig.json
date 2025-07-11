@@ -8,6 +8,7 @@
    { "path": "./packages/file-browser" },
    { "path": "./packages/ics" },
    { "path": "./packages/location" },
+   { "path": "./packages/mail" },
    { "path": "./packages/memory" },
    { "path": "./packages/npm" },
    { "path": "./packages/weather" }

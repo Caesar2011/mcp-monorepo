@@ -1,4 +1,4 @@
-// Tests for fetch-latest-mails/helper.ts (search-based)
+// Tests for fetch-latest-mails/helper.ts (search-mails-based)
 import { type FetchMessageObject, type MessageAddressObject } from 'imapflow'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
@@ -72,7 +72,7 @@ describe('fetchMailsForAccount', () => {
     // yesterday
     const mailYesterday = makeEnvelope({ subject: 'Yesterday', date: new Date(Date.now() - 24 * 60 * 60 * 1000) })
 
-    // Only return 'today' and 'yesterday' uids in search
+    // Only return 'today' and 'yesterday' uids in search-mails
     mockSearch.mockResolvedValue([123, 124]) // simulate UID 123 (today), 124 (yesterday)
     // fetch yields matching messages only
     mockFetch.mockImplementation(async function* () {
@@ -89,7 +89,7 @@ describe('fetchMailsForAccount', () => {
     expect(mockLogout).toHaveBeenCalled()
     expect(mockRelease).toHaveBeenCalled()
     expect(mockSearch).toHaveBeenCalled()
-    // Should search with 'since' param
+    // Should search-mails with 'since' param
     const searchQuery = mockSearch.mock.calls[0][0]
     expect(searchQuery).toHaveProperty('since')
   })

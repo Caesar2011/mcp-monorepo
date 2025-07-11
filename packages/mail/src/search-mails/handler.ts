@@ -1,4 +1,4 @@
-// Handler for the search tool
+// Handler for the search-mails tool
 import { formatResponse, formatError } from './formatter.js'
 import { searchMails } from './helper.js'
 

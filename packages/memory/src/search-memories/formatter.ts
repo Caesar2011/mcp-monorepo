@@ -1,4 +1,3 @@
-// Formatter for search-memories results
 import { formatMemory } from '../lib/formatMemory.js'
 import { groupMemoriesByType } from '../lib/groupMemoriesByType.js'
 import { storageTypeProperties } from '../lib/storageTypeProperties.js'

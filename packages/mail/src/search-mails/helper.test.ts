@@ -1,4 +1,4 @@
-// helper.test.ts for search tool
+// helper.test.ts for search-mails tool
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 import { searchMails } from './helper.js'
@@ -21,7 +21,7 @@ vi.mock('imapflow', () => ({
     async logout() {}
 
     async search(query: Record<string, unknown>) {
-      // Mock server-side search - return UIDs based on search criteria
+      // Mock server-side search-mails - return UIDs based on search-mails criteria
       if (query.subject && mockMessage.envelope.subject.includes(query.subject)) {
         return [1]
       }
@@ -83,7 +83,7 @@ describe('searchMails', () => {
     expect(res[0].mails.length).toBe(0)
   })
 
-  it('returns empty result if no search criteria', async () => {
+  it('returns empty result if no search-mails criteria', async () => {
     const res = await searchMails({})
     expect(res[0].mails.length).toBe(0)
   })

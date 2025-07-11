@@ -1,4 +1,4 @@
-// formatter.test.ts for search tool
+// formatter.test.ts for search-mails tool
 import { describe, it, expect } from 'vitest'
 
 import { formatResponse, formatError } from './formatter.js'

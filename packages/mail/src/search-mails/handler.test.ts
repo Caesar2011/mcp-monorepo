@@ -1,4 +1,4 @@
-// handler.test.ts for search tool
+// handler.test.ts for search-mails tool
 import { describe, it, expect, vi } from 'vitest'
 
 import { toolHandler } from './handler.js'

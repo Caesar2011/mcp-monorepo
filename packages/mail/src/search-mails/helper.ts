@@ -1,4 +1,4 @@
-// Helper logic for search tool
+// Helper logic for search-mails tool
 import { ImapFlow, type SearchObject } from 'imapflow'
 
 import { parseMailAccounts } from '../lib/parseMailAccounts.js'
@@ -25,7 +25,7 @@ async function fetchMailsForAccount(account: AccountCredentials, params: SearchM
   await client.connect()
   const lock = await client.getMailboxLock('INBOX')
   try {
-    // Build search query using ImapFlow's native search
+    // Build search-mails query using ImapFlow's native search-mails
     let searchQuery: SearchObject = {}
     const orConditions: SearchObject[] = []
 
@@ -43,17 +43,17 @@ async function fetchMailsForAccount(account: AccountCredentials, params: SearchM
       orConditions.push({ from: params.fromContains })
     }
 
-    // If we have multiple search conditions, use OR
+    // If we have multiple search-mails conditions, use OR
     if (orConditions.length > 1) {
       searchQuery.or = orConditions
     } else if (orConditions.length === 1) {
       searchQuery = orConditions[0]
     } else {
-      // No search criteria - return empty results
+      // No search-mails criteria - return empty results
       return mails
     }
 
-    // Perform server-side search to get UIDs
+    // Perform server-side search-mails to get UIDs
     const uids = (await client.search(searchQuery, { uid: true })) || []
 
     if (uids.length === 0) {

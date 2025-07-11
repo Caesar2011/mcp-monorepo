@@ -1,4 +1,4 @@
-// Efficient fetch-latest-mails using search
+// Efficient fetch-latest-mails using search-mails
 import { ImapFlow, type SearchObject } from 'imapflow'
 
 import { parseMailAccounts } from '../lib/parseMailAccounts.js'

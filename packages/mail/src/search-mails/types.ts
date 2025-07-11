@@ -1,4 +1,4 @@
-// types.ts for mail search tool
+// types.ts for mail search-mails tool
 import type { MailAddress } from '../fetch-latest-mails/types.js'
 
 export interface SearchMailParams {

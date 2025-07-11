@@ -1,4 +1,4 @@
-// Output formatting for search tool
+// Output formatting for search-mails tool
 import type { SearchMailAccountResult, SearchMailEntry } from './types.js'
 
 function formatMailLine(mail: SearchMailEntry): string {

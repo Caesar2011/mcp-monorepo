@@ -115,13 +115,12 @@ export const findContextMatches = (fileLines: string[], approximateLine: number,
   for (let i = searchStart; i <= searchEnd; i++) {
     let found = true
     for (let j = 0; j < context.length; j++) {
-      if (fileLines[i + j] !== context[j]) {
+      if (fileLines[i + j]?.trim() !== context[j]?.trim()) {
         found = false
         break
       }
     }
     if (found) {
-      // For start context, return i, for end context, return i + context.length - 1
       matches.push(i)
     }
   }

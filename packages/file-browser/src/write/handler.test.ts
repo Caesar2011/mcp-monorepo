@@ -17,6 +17,10 @@ vi.mock('./formatter.js', () => ({
   formatError: vi.fn(),
 }))
 
+vi.mock('../lib/getWorkingDirectory.js', () => ({
+  getWorkingDirectory: vi.fn(() => '/working/dir'),
+}))
+
 const mockValidateInput = vi.mocked(validateInput)
 const mockWriteFileContent = vi.mocked(writeFileContent)
 const mockFormatResponse = vi.mocked(formatResponse)

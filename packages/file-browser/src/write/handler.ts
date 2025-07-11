@@ -1,16 +1,26 @@
 import { formatResponse, formatError } from './formatter.js'
 import { validateInput, writeFileContent } from './helper.js'
+import { executePostWriteCommand } from '../lib/executePostWriteCommand.js'
 
 import type { WriteToolParams } from './types.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 
 export const writeHandler = async (params: WriteToolParams): Promise<CallToolResult> => {
   try {
-    // Minimal logic - orchestrate helper and formatter calls
     const validatedParams = validateInput(params)
     const result = await writeFileContent(validatedParams)
-    const formattedResponse = formatResponse(result)
+    let formattedResponse = formatResponse(result)
 
+    const lintResult = await executePostWriteCommand(result.filePath)
+    if (lintResult) {
+      formattedResponse += `\n\nPost-write lint script (${lintResult.command}) executed. Writing was successful.`
+      if (lintResult.stdout.trim()) {
+        formattedResponse += '\n\nPost-write lint output: ' + lintResult.stdout
+      }
+      if (lintResult.code !== 0 || lintResult.stderr.trim()) {
+        formattedResponse += '\n\nPost-write lint error: ' + lintResult.stderr
+      }
+    }
     return {
       content: [
         {

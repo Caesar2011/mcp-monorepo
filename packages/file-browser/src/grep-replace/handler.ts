@@ -1,15 +1,26 @@
 import { formatResponse, formatError } from './formatter.js'
 import { validateInput, grepReplaceFiles } from './helper.js'
+import { executePostWriteCommand } from '../lib/executePostWriteCommand.js'
 
 import type { GrepReplaceToolParams } from './types.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 
 export const grepReplaceHandler = async (params: GrepReplaceToolParams): Promise<CallToolResult> => {
   try {
-    // Minimal logic - orchestrate helper and formatter calls
     const validatedParams = validateInput(params)
     const result = await grepReplaceFiles(validatedParams)
-    const formattedResponse = formatResponse(result)
+    let formattedResponse = formatResponse(result)
+
+    const lintResult = await executePostWriteCommand(result.filesModified)
+    if (lintResult) {
+      formattedResponse += `\n\nPost-write lint script (${lintResult.command}) executed. Writing was successful.`
+      if (lintResult.stdout.trim()) {
+        formattedResponse += '\n\nPost-write lint output: ' + lintResult.stdout
+      }
+      if (lintResult.code !== 0 || lintResult.stderr.trim()) {
+        formattedResponse += '\n\nPost-write lint error: ' + lintResult.stderr
+      }
+    }
 
     return {
       content: [

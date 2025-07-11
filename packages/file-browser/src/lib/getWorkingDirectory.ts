@@ -1,12 +1,19 @@
 import { resolve } from 'path'
 
 export const getWorkingDirectory = (): string => {
-  // The working directory is expected as the first argument after the script name
+  // 1. ENV-Variante bevorzugen
+  const envDir = process.env.WORKING_DIR
+  if (envDir && envDir.trim() !== '') {
+    return resolve(envDir)
+  }
+
+  // 2. Fallback: Argument wie bisher
   const workingDir = process.argv[2]
   if (!workingDir) {
-    console.error('Error: Working directory not provided as argument. Usage: node <mcp-file> <working_directory>')
+    console.error(
+      'Error: Working directory not provided as argument or WORKING_DIR env. Usage: node <mcp-file> <working_directory> or set WORKING_DIR',
+    )
     process.exit(1)
   }
-  // Resolve to an absolute path for consistency
   return resolve(workingDir)
 }

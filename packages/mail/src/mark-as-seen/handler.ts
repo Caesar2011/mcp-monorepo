@@ -7,8 +7,8 @@ import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 
 export const toolHandler = async (params: MarkAsSeenParams): Promise<CallToolResult> => {
   try {
-    const validatedParams = validateInput(params)
-    const data = await markMailsAsSeen(validatedParams)
+    validateInput(params)
+    const data = await markMailsAsSeen(params)
     const formattedResponse = formatResponse(data)
 
     return {

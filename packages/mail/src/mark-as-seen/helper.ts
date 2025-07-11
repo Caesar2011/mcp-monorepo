@@ -1,5 +1,6 @@
-// Business logic for mark-as-seen tool
 import { ImapFlow } from 'imapflow'
+
+import { parseMailAccounts } from '../lib/parseMailAccounts.js'
 
 import type {
   MarkAsSeenParams,
@@ -9,37 +10,8 @@ import type {
   MailMarkResult,
 } from './types.js'
 
-// Parse MAIL_ACCOUNTS env var (robust against @ and : in user/pass)
-export function parseMailAccounts(): AccountCredentials[] {
-  const env = process.env.MAIL_ACCOUNTS
-  if (!env) throw new Error('MAIL_ACCOUNTS env variable is not set')
-  return env
-    .split(' ')
-    .filter(Boolean)
-    .map((entry) => {
-      // Robust parsing: split at LAST @ for host/port, FIRST : for user/pass
-      const atIdx = entry.lastIndexOf('@')
-      if (atIdx === -1)
-        throw new Error(`Invalid MAIL_ACCOUNTS entry: Could not split at LAST @ for host/port, FIRST for user/pass`)
-      const cred = entry.slice(0, atIdx)
-      const hostPort = entry.slice(atIdx + 1)
-      const colonIdx = cred.indexOf(':')
-      if (colonIdx === -1) throw new Error(`Invalid MAIL_ACCOUNTS entry (missing colon in user:pass)`)
-      const user = cred.slice(0, colonIdx)
-      const pass = cred.slice(colonIdx + 1)
-      const hostPortMatch = hostPort.match(/^(.*?):(\d+)$/)
-      if (!hostPortMatch) throw new Error(`Invalid MAIL_ACCOUNTS entry (host:port): ${entry}`)
-      return {
-        user,
-        pass,
-        host: hostPortMatch[1],
-        port: Number(hostPortMatch[2]),
-      }
-    })
-}
-
 // Input validation
-export const validateInput = (params: MarkAsSeenParams): ValidatedParams => {
+export const validateInput = (params: MarkAsSeenParams): void => {
   if (!params.username) {
     throw new Error('Username is required')
   }
@@ -49,7 +21,6 @@ export const validateInput = (params: MarkAsSeenParams): ValidatedParams => {
   if (!params.mailIds || params.mailIds.length === 0) {
     throw new Error('Mail IDs array is required and must not be empty')
   }
-  return params as ValidatedParams
 }
 
 // Find account matching username and IMAP server

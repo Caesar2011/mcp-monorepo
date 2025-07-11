@@ -1,7 +1,7 @@
 // Tests for mark-as-seen helper functions
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
-import { parseMailAccounts, validateInput, findMatchingAccount, markMailsAsSeen } from './helper.js'
+import { validateInput, findMatchingAccount, markMailsAsSeen } from './helper.js'
 
 import type { MarkAsSeenParams, AccountCredentials } from './types.js'
 
@@ -26,39 +26,6 @@ vi.mock('imapflow', () => {
   }
 })
 
-describe('parseMailAccounts', () => {
-  const originalEnv = process.env.MAIL_ACCOUNTS
-
-  afterEach(() => {
-    process.env.MAIL_ACCOUNTS = originalEnv
-  })
-
-  it('should parse valid mail accounts', () => {
-    process.env.MAIL_ACCOUNTS = 'user1:pass1@host1:993 user2:pass2@host2:993'
-    const result = parseMailAccounts()
-    expect(result).toEqual([
-      { user: 'user1', pass: 'pass1', host: 'host1', port: 993 },
-      { user: 'user2', pass: 'pass2', host: 'host2', port: 993 },
-    ])
-  })
-
-  it('should handle complex passwords with special characters', () => {
-    process.env.MAIL_ACCOUNTS = 'user@domain.com:p@ss:w0rd@imap.gmail.com:993'
-    const result = parseMailAccounts()
-    expect(result).toEqual([{ user: 'user@domain.com', pass: 'p@ss:w0rd', host: 'imap.gmail.com', port: 993 }])
-  })
-
-  it('should throw error when MAIL_ACCOUNTS is not set', () => {
-    delete process.env.MAIL_ACCOUNTS
-    expect(() => parseMailAccounts()).toThrow('MAIL_ACCOUNTS env variable is not set')
-  })
-
-  it('should throw error for invalid format', () => {
-    process.env.MAIL_ACCOUNTS = 'invalidformat'
-    expect(() => parseMailAccounts()).toThrow('Invalid MAIL_ACCOUNTS entry')
-  })
-})
-
 describe('validateInput', () => {
   it('should validate correct input', () => {
     const params: MarkAsSeenParams = {
@@ -66,8 +33,7 @@ describe('validateInput', () => {
       imapServer: 'imap.example.com',
       mailIds: ['1', '2', '3'],
     }
-    const result = validateInput(params)
-    expect(result).toEqual(params)
+    expect(() => validateInput(params)).not.toThrow()
   })
 
   it('should throw error for missing username', () => {

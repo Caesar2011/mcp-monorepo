@@ -4,6 +4,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 import { registerLatestMailsTool } from './latest-mails/index.js'
 import { registerMarkAsSeenTool } from './mark-as-seen/index.js'
+import { registerReadMailTool } from './read-mail/index.js'
 
 export const server = new McpServer({
   name: 'mail-server',
@@ -13,6 +14,7 @@ export const server = new McpServer({
 
 registerLatestMailsTool(server)
 registerMarkAsSeenTool(server)
+registerReadMailTool(server)
 
 const transport = new StdioServerTransport()
 server.connect(transport).then(() => {

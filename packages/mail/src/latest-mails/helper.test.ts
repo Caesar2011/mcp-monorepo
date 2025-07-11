@@ -127,9 +127,6 @@ describe('fetchMailsForAccount', () => {
 })
 
 describe('fetchLatestMails', () => {
-  const acc1 = { user: 'user1', pass: 'pw1', host: 'mail1', port: 993 }
-  const acc2 = { user: 'user2', pass: 'pw2', host: 'mail2', port: 993 }
-
   it('handles multiple accounts successfully', async () => {
     process.env.MAIL_ACCOUNTS = 'user1:pw1@mail1:993 user2:pw2@mail2:993'
     let call = 0

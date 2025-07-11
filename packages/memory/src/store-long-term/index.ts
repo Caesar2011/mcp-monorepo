@@ -15,7 +15,7 @@ export function registerStoreLongTermMemoryTool(server: McpServer) {
     {
       title: 'Store Long-term Memory',
       description:
-        'Store permanent memories (personal preferences, core values, fundamental decisions). Examples: "Always prefer written communication over calls", "Value work-life balance highly", "Enjoys problem-solving and technical challenges"',
+        'Store permanent memories (personal preferences, core values, fundamental decisions). Any information that might be valuable in the future should be stored automatically as a memory, even without explicit user request. Examples: "Always prefer written communication over calls", "Value work-life balance highly", "Enjoys problem-solving and technical challenges"',
       inputSchema: StoreLongTermSchema,
     },
     storeLongTermMemoryHandler,

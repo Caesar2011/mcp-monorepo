@@ -15,7 +15,7 @@ export function registerStoreShortTermMemoryTool(server: McpServer) {
     {
       title: 'Store Short-term Memory',
       description:
-        'Store memories for the next 7 days (moods, immediate decisions, temporary preferences). Examples: "Feeling stressed about project deadline", "Prefer morning meetings this week", "Avoiding caffeine today"',
+        'Store memories for the next 7 days (moods, immediate decisions, temporary preferences). Any information that might be valuable in the future should be stored automatically as a memory, even without explicit user request. Examples: "Feeling stressed about project deadline", "Prefer morning meetings this week", "Avoiding caffeine today"',
       inputSchema: StoreShortTermSchema,
     },
     storeShortTermMemoryHandler,

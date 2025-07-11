@@ -1,11 +1,11 @@
-// Types for mark-as-seen tool
-export interface MarkAsSeenParams {
+// Types for mark-mails-as-seen tool
+export interface MarkMailsAsSeenParams {
   username: string
   imapServer: string
   mailIds: string[]
 }
 
-export interface ValidatedParams extends MarkAsSeenParams {
+export interface ValidatedParams extends MarkMailsAsSeenParams {
   username: string // Now guaranteed to exist
   imapServer: string // Now guaranteed to exist
   mailIds: string[] // Now guaranteed to exist and non-empty
@@ -25,7 +25,7 @@ export interface MailMarkResult {
   error?: string
 }
 
-export interface MarkAsSeenResult {
+export interface MarkMailsAsSeenResult {
   account: string
   totalProcessed: number
   successCount: number

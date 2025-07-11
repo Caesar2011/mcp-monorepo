@@ -1,9 +1,9 @@
-// Tests for mark-as-seen handler
+// Tests for mark-mails-as-seen handler
 import { describe, it, expect, vi } from 'vitest'
 
 import { toolHandler } from './handler.js'
 
-import type { MarkAsSeenParams } from './types.js'
+import type { MarkMailsAsSeenParams } from './types.js'
 
 // Mock the helper and formatter modules
 vi.mock('./helper.js', () => ({
@@ -21,7 +21,7 @@ describe('toolHandler', () => {
     const { validateInput, markMailsAsSeen } = await import('./helper.js')
     const { formatResponse } = await import('./formatter.js')
 
-    const mockParams: MarkAsSeenParams = {
+    const mockParams: MarkMailsAsSeenParams = {
       username: 'test@example.com',
       imapServer: 'imap.example.com',
       mailIds: ['1', '2'],
@@ -37,7 +37,7 @@ describe('toolHandler', () => {
     }
     const mockFormattedResponse = 'Formatted success response'
 
-    vi.mocked(validateInput).mockReturnValue(mockValidatedParams)
+    vi.mocked(validateInput).mockReturnValue(undefined)
     vi.mocked(markMailsAsSeen).mockResolvedValue(mockResult)
     vi.mocked(formatResponse).mockReturnValue(mockFormattedResponse)
 
@@ -60,7 +60,7 @@ describe('toolHandler', () => {
     const { validateInput } = await import('./helper.js')
     const { formatError } = await import('./formatter.js')
 
-    const mockParams: MarkAsSeenParams = {
+    const mockParams: MarkMailsAsSeenParams = {
       username: '',
       imapServer: 'imap.example.com',
       mailIds: ['1'],
@@ -92,7 +92,7 @@ describe('toolHandler', () => {
     const { validateInput, markMailsAsSeen } = await import('./helper.js')
     const { formatError } = await import('./formatter.js')
 
-    const mockParams: MarkAsSeenParams = {
+    const mockParams: MarkMailsAsSeenParams = {
       username: 'test@example.com',
       imapServer: 'imap.example.com',
       mailIds: ['1'],
@@ -101,7 +101,7 @@ describe('toolHandler', () => {
     const mockError = new Error('Connection failed')
     const mockFormattedError = 'Error: Connection failed'
 
-    vi.mocked(validateInput).mockReturnValue(mockParams)
+    vi.mocked(validateInput).mockReturnValue(undefined)
     vi.mocked(markMailsAsSeen).mockRejectedValue(mockError)
     vi.mocked(formatError).mockReturnValue(mockFormattedError)
 
@@ -123,7 +123,7 @@ describe('toolHandler', () => {
     const { validateInput } = await import('./helper.js')
     const { formatError } = await import('./formatter.js')
 
-    const mockParams: MarkAsSeenParams = {
+    const mockParams: MarkMailsAsSeenParams = {
       username: 'test@example.com',
       imapServer: 'imap.example.com',
       mailIds: ['1'],

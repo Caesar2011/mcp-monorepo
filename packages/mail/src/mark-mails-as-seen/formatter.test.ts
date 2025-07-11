@@ -1,9 +1,9 @@
-// Tests for mark-as-seen formatter functions
+// Tests for mark-mails-as-seen formatter functions
 import { describe, it, expect } from 'vitest'
 
 import { formatResponse, formatError } from './formatter.js'
 
-import type { MarkAsSeenResult, MailMarkResult } from './types.js'
+import type { MarkMailsAsSeenResult, MailMarkResult } from './types.js'
 
 describe('formatResponse', () => {
   it('should format successful results', () => {
@@ -12,7 +12,7 @@ describe('formatResponse', () => {
       { id: '2', title: 'Second Email', success: true },
     ]
 
-    const data: MarkAsSeenResult = {
+    const data: MarkMailsAsSeenResult = {
       account: 'test@example.com@imap.example.com',
       totalProcessed: 2,
       successCount: 2,
@@ -38,7 +38,7 @@ describe('formatResponse', () => {
       { id: '2', title: 'Failed Email', success: false, error: 'Message not found' },
     ]
 
-    const data: MarkAsSeenResult = {
+    const data: MarkMailsAsSeenResult = {
       account: 'test@example.com@imap.example.com',
       totalProcessed: 2,
       successCount: 1,
@@ -59,7 +59,7 @@ describe('formatResponse', () => {
   })
 
   it('should format empty results', () => {
-    const data: MarkAsSeenResult = {
+    const data: MarkMailsAsSeenResult = {
       account: 'test@example.com@imap.example.com',
       totalProcessed: 0,
       successCount: 0,
@@ -80,7 +80,7 @@ describe('formatResponse', () => {
   it('should include account error when present', () => {
     const results: MailMarkResult[] = [{ id: '1', title: 'Test Email', success: true }]
 
-    const data: MarkAsSeenResult = {
+    const data: MarkMailsAsSeenResult = {
       account: 'test@example.com@imap.example.com',
       totalProcessed: 1,
       successCount: 1,
@@ -96,7 +96,7 @@ describe('formatResponse', () => {
   it('should handle mails with no subject', () => {
     const results: MailMarkResult[] = [{ id: '1', title: '(no subject)', success: true }]
 
-    const data: MarkAsSeenResult = {
+    const data: MarkMailsAsSeenResult = {
       account: 'test@example.com@imap.example.com',
       totalProcessed: 1,
       successCount: 1,

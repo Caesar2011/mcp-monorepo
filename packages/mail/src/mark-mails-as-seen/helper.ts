@@ -3,15 +3,15 @@ import { ImapFlow } from 'imapflow'
 import { parseMailAccounts } from '../lib/parseMailAccounts.js'
 
 import type {
-  MarkAsSeenParams,
+  MarkMailsAsSeenParams,
   ValidatedParams,
   AccountCredentials,
-  MarkAsSeenResult,
+  MarkMailsAsSeenResult,
   MailMarkResult,
 } from './types.js'
 
 // Input validation
-export const validateInput = (params: MarkAsSeenParams): void => {
+export const validateInput = (params: MarkMailsAsSeenParams): void => {
   if (!params.username) {
     throw new Error('Username is required')
   }
@@ -37,7 +37,7 @@ export function findMatchingAccount(
 }
 
 // Mark specific mails as seen
-export async function markMailsAsSeen(params: ValidatedParams): Promise<MarkAsSeenResult> {
+export async function markMailsAsSeen(params: ValidatedParams): Promise<MarkMailsAsSeenResult> {
   const accounts = parseMailAccounts()
   const account = findMatchingAccount(accounts, params.username, params.imapServer)
 

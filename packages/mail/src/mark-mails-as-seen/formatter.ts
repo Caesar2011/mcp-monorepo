@@ -1,5 +1,5 @@
-// Output formatting for mark-as-seen tool
-import type { MarkAsSeenResult, MailMarkResult } from './types.js'
+// Output formatting for mark-mails-as-seen tool
+import type { MarkMailsAsSeenResult, MailMarkResult } from './types.js'
 
 // Format a single mail result
 function formatMailResult(result: MailMarkResult): string {
@@ -9,7 +9,7 @@ function formatMailResult(result: MailMarkResult): string {
 }
 
 // Format the complete response
-export function formatResponse(data: MarkAsSeenResult): string {
+export function formatResponse(data: MarkMailsAsSeenResult): string {
   const header = `# Mark as Seen Results for ${data.account}`
   const summary = `Total processed: ${data.totalProcessed} | Successful: ${data.successCount} | Failed: ${data.failureCount}`
 

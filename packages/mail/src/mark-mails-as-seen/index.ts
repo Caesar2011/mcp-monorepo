@@ -1,13 +1,13 @@
-// Tool registration for mark-as-seen
+// Tool registration for mark-mails-as-seen
 import { z } from 'zod'
 
 import { toolHandler } from './handler.js'
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
-export function registerMarkAsSeenTool(server: McpServer): void {
+export function registerMarkMailsAsSeenTool(server: McpServer): void {
   server.registerTool(
-    'mark-as-seen',
+    'mark-mails-as-seen',
     {
       title: 'Mark emails as seen',
       description:

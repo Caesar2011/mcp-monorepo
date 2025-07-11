@@ -1,5 +1,5 @@
-// Shared parseMailAccounts for mail tools (mark-as-seen, fetch-latest-mails)
-import type { AccountCredentials } from '../mark-as-seen/types.js'
+// Shared parseMailAccounts for mail tools (mark-mails-as-seen, fetch-latest-mails)
+import type { AccountCredentials } from '../mark-mails-as-seen/types.js'
 
 /**
  * Parses the MAIL_ACCOUNTS env variable into an array of AccountCredentials.

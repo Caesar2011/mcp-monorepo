@@ -1,11 +1,11 @@
-// Handler for mark-as-seen tool
+// Handler for mark-mails-as-seen tool
 import { formatResponse, formatError } from './formatter.js'
 import { validateInput, markMailsAsSeen } from './helper.js'
 
-import type { MarkAsSeenParams } from './types.js'
+import type { MarkMailsAsSeenParams } from './types.js'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 
-export const toolHandler = async (params: MarkAsSeenParams): Promise<CallToolResult> => {
+export const toolHandler = async (params: MarkMailsAsSeenParams): Promise<CallToolResult> => {
   try {
     validateInput(params)
     const data = await markMailsAsSeen(params)

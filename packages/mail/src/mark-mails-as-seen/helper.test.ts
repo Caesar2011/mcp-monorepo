@@ -1,9 +1,9 @@
-// Tests for mark-as-seen helper functions
+// Tests for mark-mails-as-seen helper functions
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 
 import { validateInput, findMatchingAccount, markMailsAsSeen } from './helper.js'
 
-import type { MarkAsSeenParams, AccountCredentials } from './types.js'
+import type { MarkMailsAsSeenParams, AccountCredentials } from './types.js'
 
 // Mock ImapFlow
 vi.mock('imapflow', () => {
@@ -28,7 +28,7 @@ vi.mock('imapflow', () => {
 
 describe('validateInput', () => {
   it('should validate correct input', () => {
-    const params: MarkAsSeenParams = {
+    const params: MarkMailsAsSeenParams = {
       username: 'test@example.com',
       imapServer: 'imap.example.com',
       mailIds: ['1', '2', '3'],
@@ -41,7 +41,7 @@ describe('validateInput', () => {
       username: '',
       imapServer: 'imap.example.com',
       mailIds: ['1'],
-    } as MarkAsSeenParams
+    } as MarkMailsAsSeenParams
     expect(() => validateInput(params)).toThrow('Username is required')
   })
 
@@ -50,7 +50,7 @@ describe('validateInput', () => {
       username: 'test@example.com',
       imapServer: '',
       mailIds: ['1'],
-    } as MarkAsSeenParams
+    } as MarkMailsAsSeenParams
     expect(() => validateInput(params)).toThrow('IMAP server is required')
   })
 
@@ -59,7 +59,7 @@ describe('validateInput', () => {
       username: 'test@example.com',
       imapServer: 'imap.example.com',
       mailIds: [],
-    } as MarkAsSeenParams
+    } as MarkMailsAsSeenParams
     expect(() => validateInput(params)).toThrow('Mail IDs array is required and must not be empty')
   })
 })

@@ -5,7 +5,7 @@ beforeEach(() => {
   vi.resetModules()
 })
 
-describe('getAllMemories', () => {
+describe('rememberAllMemories', () => {
   it('calls cleanupExpiredMemories before querying db', async () => {
     const cleanup = vi.fn()
     vi.doMock('../lib/cleanupExpiredMemories.js', () => ({ cleanupExpiredMemories: cleanup }))
@@ -14,8 +14,8 @@ describe('getAllMemories', () => {
     vi.doMock('../lib/getDatabase.js', () => ({
       getDatabase: () => ({ prepare: () => ({ all: () => fakeMemories }) }),
     }))
-    const { getAllMemories } = await import('./helper.js')
-    const res = getAllMemories()
+    const { rememberAllMemories } = await import('./helper.js')
+    const res = rememberAllMemories()
     expect(cleanup).toHaveBeenCalledTimes(1)
     expect(res).toEqual(fakeMemories)
   })

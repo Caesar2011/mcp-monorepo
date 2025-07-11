@@ -1,11 +1,11 @@
 import { formatAllMemories } from './formatter.js'
-import { getAllMemories } from './helper.js'
+import { rememberAllMemories } from './helper.js'
 
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 
-export const getAllMemoriesHandler = async (): Promise<CallToolResult> => {
+export const rememberAllMemoriesHandler = async (): Promise<CallToolResult> => {
   try {
-    const memories = getAllMemories()
+    const memories = rememberAllMemories()
     return {
       content: [
         {

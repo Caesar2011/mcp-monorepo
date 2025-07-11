@@ -3,7 +3,7 @@ import { cleanupExpiredMemories } from '../lib/cleanupExpiredMemories.js'
 import { getDatabase } from '../lib/getDatabase.js'
 import { type Memory } from '../lib/types.js'
 
-export function getAllMemories(): Memory[] {
+export function rememberAllMemories(): Memory[] {
   cleanupExpiredMemories()
   const db = getDatabase()
   const stmt = db.prepare('SELECT * FROM memories ORDER BY storage_type, created_timestamp DESC')

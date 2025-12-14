@@ -5,9 +5,15 @@
   "description": "MCP server for Confluence API tools",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "mcp-npm-server": "./dist/index.js"
+  },
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b",
     "dev": "tsc --watch",
@@ -21,7 +27,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "zod": "^3.25.76",
-    "@mcp-monorepo/shared": "*"
+    "@mcp-monorepo/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",

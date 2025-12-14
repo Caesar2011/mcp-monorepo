@@ -19,12 +19,16 @@
     "lint-staged": "lint-staged",
     "typecheck": "npm run typecheck --workspaces",
     "prepare": "husky",
-    "clean": "npm run clean --workspaces"
+    "clean": "npm run clean --workspaces",
+    "cs:add": "changeset add",
+    "cs:version": "changeset version",
+    "cs:publish": "changeset publish"
   },
   "author": "",
   "license": "ISC",
   "description": "MCP Tools Monorepo with TypeScript support",
   "devDependencies": {
+    "@changesets/cli": "^2.29.8",
     "@eslint/js": "^9.29.0",
     "@types/node": "^22.14.1",
     "@typescript-eslint/eslint-plugin": "^8.34.0",

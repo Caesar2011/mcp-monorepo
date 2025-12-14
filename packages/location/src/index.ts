@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { createMcpServer } from '@mcp-monorepo/shared'
 
 import { registerGetCurrentLocationTool } from './tools/get-current-location.js'

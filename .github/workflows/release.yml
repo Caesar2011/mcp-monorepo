@@ -1,0 +1,139 @@
+name: CI & Release
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# Set default permissions for the GITHUB_TOKEN for the release job
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  # Job 1: Install dependencies once and cache them
+  install:
+    name: Install Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Upload Workspace Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace
+          path: .
+
+  # Jobs 2 & 3: Run lint and test in parallel
+  lint:
+    name: Lint Code
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Workspace Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace
+          path: .
+
+      - name: Setup Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Run Lint
+        run: npm run lint
+
+  test:
+    name: Run Tests
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Workspace Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace
+          path: .
+
+      - name: Setup Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Run Tests
+        run: npm test
+
+  # Job 4: Build the project, requires lint and test to pass
+  build:
+    name: Build Project
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Workspace Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace
+          path: .
+
+      - name: Setup Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Upload Built Workspace Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: workspace-built
+          path: .
+
+  # Job 5: Release the packages, only on push to main
+  release:
+    name: Release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      # The Changesets action needs the full git history for versioning
+      - name: Checkout Repo with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # It also needs the built code from the previous job
+      - name: Download Built Workspace Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: workspace-built
+          path: .
+
+      - name: Setup Node.js from .nvmrc
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/actions@v1
+        with:
+          # The 'build' step is already done in a previous job.
+          # We just tell the action to run the publish command.
+          publish: npm run cs:publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

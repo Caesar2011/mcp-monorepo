@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { createMcpServer, logger } from '@mcp-monorepo/shared'
 
 import { registerFetchLatestMailsTool } from './tools/fetch-latest-mails.js'

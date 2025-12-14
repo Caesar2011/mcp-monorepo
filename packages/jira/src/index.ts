@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { createMcpServer, logger } from '@mcp-monorepo/shared'
 
 import { registerExecuteJqlTool } from './tools/execute-jql.js'

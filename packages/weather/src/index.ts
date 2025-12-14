@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { createMcpServer } from '@mcp-monorepo/shared'
 
 import { registerGeocodingTool } from './tools/geocoding.js'

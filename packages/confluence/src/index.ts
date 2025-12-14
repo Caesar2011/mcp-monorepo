@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 process.env.APP_NAME = 'confluence'
 
 import { createMcpServer } from '@mcp-monorepo/shared'

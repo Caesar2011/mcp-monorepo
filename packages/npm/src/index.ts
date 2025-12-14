@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 import { createMcpServer } from '@mcp-monorepo/shared'
 
 import { registerInstallTool } from './tools/install.js'

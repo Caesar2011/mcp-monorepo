@@ -5,9 +5,15 @@
   "description": "MCP server for calendar tools using ICS/ical feeds",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "bin": {
+    "mcp-npm-server": "./dist/index.js"
+  },
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsc -b",
     "dev": "tsc --watch",
@@ -23,7 +29,7 @@
     "zod": "^3.25.76",
     "date-fns-tz": "^3.2.0",
     "node-ical": "^0.20.1",
-    "@mcp-monorepo/shared": "*"
+    "@mcp-monorepo/shared": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",

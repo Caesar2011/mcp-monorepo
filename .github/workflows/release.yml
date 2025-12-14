@@ -35,62 +35,23 @@ jobs:
       - name: Build Project
         run: npm run build
 
+      - name: Run Lint
+        run: npm run lint
+
+      - name: Run Tests
+        run: npm test
+
       - name: Upload Built Project Artifact
         uses: actions/upload-artifact@v4
         with:
           name: mcp-monorepo-dist
           path: .
-  lint:
-    name: Lint Code
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js from .nvmrc
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-
-      - name: Update npm
-        run: npm install -g npm@latest
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Run Lint
-        run: npm run lint
-
-  test:
-    name: Run Tests
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js from .nvmrc
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
-          cache: 'npm'
-
-      - name: Update npm
-        run: npm install -g npm@latest
-
-      - name: Install Dependencies
-        run: npm ci
-
-      - name: Run Tests
-        run: npm test
 
 
   release:
     name: Release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [lint, test]
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Download Built Project Artifact

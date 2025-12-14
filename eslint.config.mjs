@@ -4,6 +4,8 @@ import eslintPluginImport from 'eslint-plugin-import'
 import eslintPluginUnusedImports from 'eslint-plugin-unused-imports'
 import tseslint from 'typescript-eslint'
 
+import { useLoggerNotConsolePlugin } from './.eslint/use-logger-not-console.mjs'
+
 export default tseslint.config(
   {
     // Ignores specified directories from linting.
@@ -17,7 +19,10 @@ export default tseslint.config(
     settings: {
       'import/resolver': {
         typescript: {
-          project: './tsconfig.json',
+          project: [
+            './tsconfig.json',
+            //'./packages/*/tsconfig.json'
+          ],
         },
       },
     },
@@ -26,8 +31,11 @@ export default tseslint.config(
     plugins: {
       import: eslintPluginImport,
       'unused-imports': eslintPluginUnusedImports,
+      'use-logger-not-console': useLoggerNotConsolePlugin,
     },
     rules: {
+      // --- Custom Rules
+      'use-logger-not-console/replace-console-with-logger': 'error',
       // --- TypeScript Specific Rules ---
 
       '@typescript-eslint/consistent-type-imports': [

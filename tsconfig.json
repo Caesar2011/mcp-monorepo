@@ -5,12 +5,15 @@
  },
  "include": [],
  "references": [
+   { "path": "./packages/shared" },
    { "path": "./packages/file-browser" },
    { "path": "./packages/ics" },
    { "path": "./packages/location" },
-   { "path": "./packages/mail" },
-   { "path": "./packages/memory" },
+   { "path": "./packages/mail"},
    { "path": "./packages/npm" },
-   { "path": "./packages/weather" }
+   { "path": "./packages/weather" },
+   { "path": "./packages/slack" },
+   { "path": "./packages/confluence" },
+   { "path": "./packages/jira"}
  ]
 }

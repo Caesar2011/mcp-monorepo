@@ -12,17 +12,18 @@
     "build": "tsc -b",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.23.1",
     "zod": "^3.25.76",
     "date-fns-tz": "^3.2.0",
-    "node-ical": "^0.20.1"
+    "node-ical": "^0.20.1",
+    "@mcp-monorepo/shared": "*"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",

@@ -28,7 +28,10 @@ packages/
 │     ├── handler.ts # Callback implementation (flat, minimal logic)
 │     ├── helper.ts # Business logic implementation
 │     ├── formatter.ts # Output formatting only
-│     └── types.ts # Tool-specific TypeScript types
+│     ├── geocoding.weather-by-coords.types.ts # Tool-specific TypeScript types
+│     ├── handler.test.ts # Tests for handler logic
+│     ├── helper.test.ts # Tests for business logic
+│     └── formatter.test.ts # Tests for formatting logic
 ```
 
 ### File Responsibilities & Content Structure
@@ -99,26 +102,31 @@ export function registerTool(server: McpServer): void {
 }
 ```
 
+**CRITICAL**: The inputSchema should NOT be wrapped in `z.object({})`! Use individual zod validators directly:
+
+- ✅ **Correct**: `inputSchema: { param1: z.string(), param2: z.number().optional() }`
+- ❌ **Wrong**: `inputSchema: z.object({ param1: z.string(), param2: z.number().optional() })`
+
 **`handler.ts`** (Callback Implementation)
 
 ```typescript
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
-import { validateInput, processData } from './helper.js'
+import { processData } from './helper.js'
 import { formatResponse, formatError } from './formatter.js'
 import type { ToolParams, ProcessedData } from './types.js'
 
 export const toolHandler = async (params: ToolParams): Promise<CallToolResult> => {
   try {
+    // NO VALIDATION NEEDED - MCP Framework already validates with Zod schemas
     // Minimal logic - orchestrate helper and formatter calls
-    const validatedParams = validateInput(params)
-    const data = await processData(validatedParams)
+    const data = await processData(params)
     const formattedResponse = formatResponse(data)
 
     return {
       content: [
         {
           type: 'text',
-          text: formattedResponse,
+          text: JSON.stringify(formattedResponse),
         },
       ],
     }
@@ -128,9 +136,7 @@ export const toolHandler = async (params: ToolParams): Promise<CallToolResult> =
       content: [
         {
           type: 'text',
-          text: errorMessage,
-          // only add _meta if error stacktrace or detailed/original error is present
-          _meta: { stderr: error.message },
+          text: JSON.stringify(errorMessage),
         },
       ],
     }
@@ -138,19 +144,16 @@ export const toolHandler = async (params: ToolParams): Promise<CallToolResult> =
 }
 ```
 
+**CRITICAL**:
+
+- ❌ **Do NOT validate parameters in handler** - MCP Framework handles this automatically
+- ❌ **Do NOT call validateInput()** - Parameters are already validated
+- ✅ **Trust that parameters match your Zod schema**
+
 **`helper.ts`** (Business Logic)
 
 ```typescript
-import type { ToolParams, ValidatedParams, ProcessedData, ExternalApiResponse } from './types.js'
-
-// Input validation
-export const validateInput = (params: ToolParams): ValidatedParams => {
-  // Validation logic only
-  if (!params.requiredField) {
-    throw new Error('Required field missing')
-  }
-  return params as ValidatedParams
-}
+import type { ToolParams, ProcessedData, ExternalApiResponse } from './types.js'
 
 // External API calls
 export const fetchExternalData = async (param: string): Promise<ExternalApiResponse> => {
@@ -163,7 +166,8 @@ export const fetchExternalData = async (param: string): Promise<ExternalApiRespo
 }
 
 // Data processing
-export const processData = async (params: ValidatedParams): Promise<ProcessedData> => {
+export const processData = async (params: ToolParams): Promise<ProcessedData> => {
+  // NO VALIDATION NEEDED - Parameters already validated by MCP
   // Pure business logic
   const rawData = await fetchExternalData(params.param1)
   return {
@@ -172,13 +176,12 @@ export const processData = async (params: ValidatedParams): Promise<ProcessedDat
     timestamp: new Date().toISOString(),
   }
 }
-
-// Utility functions
-export const isValidFormat = (input: string): boolean => {
-  // Validation helper
-  return /^[a-zA-Z0-9]+$/.test(input)
-}
 ```
+
+**CRITICAL**:
+
+- ❌ **Do NOT validate parameters in helper functions** - Already done by MCP framework
+- ✅ **Focus on pure business logic only**
 
 **`formatter.ts`** (Output Formatting)
 
@@ -186,46 +189,34 @@ export const isValidFormat = (input: string): boolean => {
 import type { ProcessedData, FormattedResponse } from './types.js'
 
 // Main response formatting
-export const formatResponse = (data: ProcessedData): string => {
-  // Pure formatting logic only
-  const header = formatHeader(data)
-  const body = formatBody(data)
-  const footer = formatFooter(data)
-
-  return `${header}\n\n${body}\n\n${footer}`
+export const formatResponse = (data: ProcessedData): FormattedResponse => {
+  // Pure formatting logic only - return compact but requested-feature complete JSON
+  return {
+    amount: data.amount,
+  }
 }
 
 // Error formatting
-export const formatError = (error: unknown): string => {
+export const formatError = (error: unknown): ErrorResponse => {
   const message = error instanceof Error ? error.message : 'Unknown error'
-  return `Error: ${message}`
-}
+  const stack = error instanceof Error ? error.stack : undefined
 
-// Internal formatting helpers (non-exported)
-const formatHeader = (data: ProcessedData): string => {
-  return `Results for: ${data.result}`
-}
-
-const formatBody = (data: ProcessedData): string => {
-  return `Processed: ${data.processed}`
-}
-
-const formatFooter = (data: ProcessedData): string => {
-  return `Generated: ${data.timestamp}`
+  // Return compact but complete JSON error response
+  return {
+    error: true,
+    message,
+    ...(stack && { stack }),
+  }
 }
 ```
 
-**`types.ts`** (Type Definitions)
+**`geocoding.weather-by-coords.types.ts`** (Type Definitions)
 
 ```typescript
 // Input types
 export interface ToolParams {
   param1: string
   param2?: number
-}
-
-export interface ValidatedParams extends ToolParams {
-  param1: string // Now guaranteed to exist
 }
 
 // External API types
@@ -238,21 +229,8 @@ export interface ExternalApiResponse {
 // Processing types
 export interface ProcessedData {
   processed: boolean
-  result: string
+  amount: number
   timestamp: string
-}
-
-// Output types
-export interface FormattedResponse {
-  content: string
-  metadata?: Record<string, unknown>
-}
-
-// Error types
-export type ToolError = {
-  code: string
-  message: string
-  details?: unknown
 }
 ```
 
@@ -269,16 +247,20 @@ export type ToolError = {
 #### Code Style Guidelines
 
 - **Efficient but readable code**: Write concise, performant code that remains clear and maintainable
-- **Formatters**: Keep formatting functions simple and direct. Avoid excessive verbosity while maintaining readability
+- **Formatters**: Keep formatting functions simple and direct. Return compact but complete JSON with relevant information only
 - **Single responsibility**: Each function should have one clear purpose
 - **Avoid over-engineering**: Choose simple, straightforward solutions over complex abstractions when possible
 
 **Formatter Example (Efficient & Readable):**
 
 ```typescript
-export const formatResponse = (data: ProcessedData): string => {
-  const parts = [data.title, data.description, `Updated: ${data.timestamp}`].filter(Boolean)
-  return parts.join('\n')
+export const formatResponse = (data: ProcessedData): FormattedResponse => {
+  // Return compact but complete JSON with relevant information
+  return {
+    title: data.title,
+    description: data.description,
+    timestamp: data.timestamp,
+  }
 }
 ```
 
@@ -288,6 +270,15 @@ export const formatResponse = (data: ProcessedData): string => {
 - **File size limit**: Maximum 200 lines per file (guideline for AI readability)
 
 ### Testing Requirements
+
+#### Test File Locations
+
+**CRITICAL**: Tests must be co-located with implementation files in the same directory:
+
+- ✅ **Correct**: `packages/<mcp-name>/src/<tool-name>/handler.test.ts`
+- ✅ **Correct**: `packages/<mcp-name>/src/<tool-name>/helper.test.ts`
+- ✅ **Correct**: `packages/<mcp-name>/src/<tool-name>/formatter.test.ts`
+- ❌ **Wrong**: `packages/<mcp-name>/test/handler.test.ts` (separate test directory)
 
 #### Vitest Configuration
 
@@ -347,16 +338,18 @@ export default defineConfig({
 
 #### Parameter Validation
 
-- Use Zod schemas for runtime parameter validation
+- Use Zod schemas for runtime parameter validation in tool registration
+- **CRITICAL**: Do NOT validate parameters in handlers or helpers - MCP handles this
 - Define TypeScript types that match Zod schemas
-- Validate all tool inputs at the handler level
+- Trust that parameters are already validated when they reach your code
 
 #### Tool Registration
 
 - Use consistent naming patterns for tools
 - Provide comprehensive tool descriptions
-- Define clear parameter schemas with validation
-- **IMPORTANT**: Use `z` from `zod` to define input schemas in tool registration, not plain objects. Use `inputSchema: z.object({...})` format
+- **CRITICAL**: Use direct zod validators in inputSchema, NOT wrapped in z.object()
+- **CORRECT**: `inputSchema: { param1: z.string().describe('...') }`
+- **WRONG**: `inputSchema: z.object({ param1: z.string() })`
 
 ## Best Practices
 
@@ -377,6 +370,7 @@ export default defineConfig({
 - Single responsibility per file with clear naming conventions
 - Group related functionality and use index files
 - Keep business logic separate from MCP protocol handling
+- **CRITICAL**: Place test files in same directory as implementation
 
 ### Testing
 
@@ -384,6 +378,49 @@ export default defineConfig({
 - Unit test critical functionality with comprehensive mocks for dependencies
 - Test edge cases and use TypeScript for compile-time checks
 - Leverage Vitest's built-in TypeScript support and fast execution
+- **CRITICAL**: Co-locate tests with implementation files
+
+## Common Mistakes to Avoid
+
+### ❌ Input Schema Mistakes
+
+```typescript
+// WRONG - Do not wrap in z.object()
+inputSchema: z.object({
+  param1: z.string(),
+})
+
+// CORRECT - Use direct zod validators
+inputSchema: {
+  param1: z.string().describe('Description')
+}
+```
+
+### ❌ Parameter Validation Mistakes
+
+```typescript
+// WRONG - Do not validate in handler
+export const handler = async (params: Params) => {
+  const validated = validateInput(params) // ❌ Remove this
+  // ...
+}
+
+// CORRECT - Trust MCP validation
+export const handler = async (params: Params) => {
+  const data = await processData(params) // ✅ Direct usage
+  // ...
+}
+```
+
+### ❌ Test Location Mistakes
+
+```
+// WRONG - Separate test directory
+packages/mcp-name/test/handler.test.ts  ❌
+
+// CORRECT - Co-located with implementation
+packages/mcp-name/src/tool-name/handler.test.ts  ✅
+```
 
 ## Areas for Improvement
 

@@ -1,31 +1,17 @@
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { createMcpServer } from '@mcp-monorepo/shared'
+import { logger } from '@mcp-monorepo/shared'
 
-import { registerFetchEventsTool } from './fetch-events/index.js'
-import { registerGetCurrentDatetimeTool } from './get-current-datetime/index.js'
+import { rawEvents } from './lib/event-store.js'
+import { registerFetchEventsTool } from './tools/fetch-events.js'
+import { registerGetCurrentDatetimeTool } from './tools/get-current-datetime.js'
+import { registerSearchEventsTool } from './tools/search-events.js'
 
-const server = new McpServer({
-  name: 'calendar-mcp-server',
-  version: '1.0.0',
-  description: 'A server to interact with multiple ICS calendar URLs and fetch events for specified periods.',
-})
+createMcpServer({
+  name: 'ics',
+  importMetaPath: import.meta.filename,
+  title: 'ICS Calendar MCP Server',
+  tools: [registerGetCurrentDatetimeTool, registerFetchEventsTool, registerSearchEventsTool],
+}).then(() => logger.error)
 
-registerGetCurrentDatetimeTool(server)
-registerFetchEventsTool(server)
-
-const transport = new StdioServerTransport()
-server.connect(transport).then(() => {
-  console.log('calendar-mcp-server connected and listening on stdio.')
-})
-
-process.on('SIGINT', async () => {
-  console.log('SIGINT received, disconnecting server...')
-  await server.close()
-  process.exit(0)
-})
-
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, disconnecting server...')
-  await server.close()
-  process.exit(0)
-})
+rawEvents.refresh().then(() => logger.error)
+setTimeout(() => rawEvents.refresh().then(() => logger.error), 1000 * 60 * 60)

@@ -12,7 +12,7 @@
     "build": "tsc -b",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
@@ -21,7 +21,8 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
     "zod": "^3.25.76",
-    "ignore": "^7.0.5"
+    "@mcp-monorepo/shared": "*",
+    "minimatch": "^10.0.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",

@@ -3,3 +3,4 @@ dist/
 /.idea/
 .eslintcache
 tsconfig.tsbuildinfo
+/old-packages/

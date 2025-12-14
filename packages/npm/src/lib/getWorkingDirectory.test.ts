@@ -1,6 +1,9 @@
 import { resolve } from 'path'
 
+import { logger } from '@mcp-monorepo/shared'
 import { describe, it, expect, vi, beforeEach, afterEach, type MockedFunction } from 'vitest'
+
+import { getWorkingDirectory } from './getWorkingDirectory.js'
 
 // Mock path module with proper default and named exports
 vi.mock('path', async (importOriginal) => {
@@ -15,12 +18,14 @@ vi.mock('path', async (importOriginal) => {
 })
 
 // Mock console and process
-const mockConsoleError = vi.spyOn(console, 'error').mockImplementation(() => {})
+vi.mock('@mcp-monorepo/shared', () => ({
+  logger: {
+    error: vi.fn(),
+  },
+}))
 const mockProcessExit = vi.spyOn(process, 'exit').mockImplementation(() => {
   throw new Error('process.exit called')
 })
-
-import { getWorkingDirectory } from './getWorkingDirectory.js'
 
 describe('utils', () => {
   let originalArgv: string[]
@@ -54,7 +59,7 @@ describe('utils', () => {
       // Assert
       expect(mockResolve).toHaveBeenCalledWith('/home/user/project')
       expect(result).toBe('/resolved/absolute/path')
-      expect(mockConsoleError).not.toHaveBeenCalled()
+      expect(logger.error).not.toHaveBeenCalled()
       expect(mockProcessExit).not.toHaveBeenCalled()
     })
 
@@ -129,7 +134,7 @@ describe('utils', () => {
 
       // Act & Assert
       expect(() => getWorkingDirectory()).toThrow('process.exit called')
-      expect(mockConsoleError).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         'Error: Working directory not provided as argument. Usage: node <mcp-file> <working_directory>',
       )
       expect(mockProcessExit).toHaveBeenCalledWith(1)
@@ -142,7 +147,7 @@ describe('utils', () => {
 
       // Act & Assert
       expect(() => getWorkingDirectory()).toThrow('process.exit called')
-      expect(mockConsoleError).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         'Error: Working directory not provided as argument. Usage: node <mcp-file> <working_directory>',
       )
       expect(mockProcessExit).toHaveBeenCalledWith(1)
@@ -159,7 +164,7 @@ describe('utils', () => {
       // Assert
       // Whitespace-only string is truthy, so it should be processed
       expect(mockResolve).toHaveBeenCalledWith(' ')
-      expect(mockConsoleError).not.toHaveBeenCalled()
+      expect(logger.error).not.toHaveBeenCalled()
       expect(mockProcessExit).not.toHaveBeenCalled()
       expect(result).toBeDefined()
     })
@@ -184,7 +189,7 @@ describe('utils', () => {
 
       // Act & Assert
       expect(() => getWorkingDirectory()).toThrow('process.exit called')
-      expect(mockConsoleError).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         'Error: Working directory not provided as argument. Usage: node <mcp-file> <working_directory>',
       )
       expect(mockProcessExit).toHaveBeenCalledWith(1)
@@ -196,7 +201,7 @@ describe('utils', () => {
 
       // Act & Assert
       expect(() => getWorkingDirectory()).toThrow('process.exit called')
-      expect(mockConsoleError).toHaveBeenCalledWith(
+      expect(logger.error).toHaveBeenCalledWith(
         'Error: Working directory not provided as argument. Usage: node <mcp-file> <working_directory>',
       )
       expect(mockProcessExit).toHaveBeenCalledWith(1)

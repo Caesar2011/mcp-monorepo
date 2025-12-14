@@ -1,55 +1,25 @@
-/**
- * Jira MCP Server - Main entry point
- */
+import { createMcpServer, logger } from '@mcp-monorepo/shared'
 
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
+import { registerExecuteJqlTool } from './tools/execute-jql.js'
+import { registerGetCurrentProfileTool } from './tools/get-current-profile.js'
+import { registerGetIssueTool } from './tools/get-issue.js'
+import { registerGetLatestProjectsTool } from './tools/get-latest-projects.js'
+import { registerGetTicketTransitionsTool } from './tools/get-ticket-transitions.js'
+import { registerSetIssueStatusTool } from './tools/set-issue-status.js'
 
-import { registerExecuteJqlTool } from './execute-jql/index.js'
-import { registerGetCurrentProfileTool } from './get-current-profile/index.js'
-import { registerGetIssueTool } from './get-issue/index.js'
-import { registerGetLatestProjectsTool } from './get-latest-projects/index.js'
-import { registerGetTicketTransitionsTool } from './get-ticket-transitions/index.js'
-import { registerSetIssueStatusTool } from './set-issue-status/index.js'
-
+// Disable self-signed certificate errors if needed for local Jira instances
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0'
 
-// Create MCP server instance
-export const server = new McpServer({
-  name: 'jira-mcp-server',
-  version: '1.0.0',
-  description: 'A server to provide Jira query and issue tools.',
-})
-
-// Register all Jira tools
-registerGetCurrentProfileTool(server)
-registerExecuteJqlTool(server)
-registerGetLatestProjectsTool(server)
-registerGetIssueTool(server)
-registerSetIssueStatusTool(server)
-registerGetTicketTransitionsTool(server)
-
-// Start receiving messages on stdin and sending messages on stdout
-const transport = new StdioServerTransport()
-server
-  .connect(transport)
-  .then(() => {
-    console.log('jira-mcp-server connected and listening on stdio.')
-  })
-  .catch((error) => {
-    console.error('Failed to connect MCP server:', error)
-    process.exit(1)
-  })
-
-// Graceful shutdown on process exit
-process.on('SIGINT', async () => {
-  console.log('SIGINT received, disconnecting server...')
-  await server.close()
-  process.exit(0)
-})
-
-process.on('SIGTERM', async () => {
-  console.log('SIGTERM received, disconnecting server...')
-  await server.close()
-  process.exit(0)
-})
+createMcpServer({
+  name: 'jira',
+  importMetaPath: import.meta.filename,
+  title: 'Jira MCP Server',
+  tools: [
+    registerGetCurrentProfileTool,
+    registerExecuteJqlTool,
+    registerGetLatestProjectsTool,
+    registerGetIssueTool,
+    registerSetIssueStatusTool,
+    registerGetTicketTransitionsTool,
+  ],
+}).catch((e) => logger.error('Failed to start Jira server', e))

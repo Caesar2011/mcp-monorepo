@@ -29,7 +29,7 @@
     "zod": "^3.25.76",
     "date-fns-tz": "^3.2.0",
     "node-ical": "^0.20.1",
-    "@mcp-monorepo/shared": "workspace:*"
+    "@mcp-monorepo/shared": "*"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",

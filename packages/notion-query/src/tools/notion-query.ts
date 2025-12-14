@@ -13,13 +13,13 @@ export const registerNotionQueryTool = (server: McpServer) =>
         .string()
         .describe('The URL of the data source to query, e.g., "collection://f336d0bc-b841-465b-8045-024475c079dd".'),
       filter: z
-        .any()
+        .record(z.string(), z.unknown())
         .optional()
         .describe(
           'A JSON filter object to apply. Example: {"property": "Done", "checkbox": {"equals": true}} or {"and": [...]}.',
         ),
       sorts: z
-        .array(z.any())
+        .array(z.record(z.string(), z.unknown()))
         .optional()
         .describe('An array of JSON sort objects. Example: [{"property": "Name", "direction": "ascending"}].'),
       start_cursor: z.string().optional().describe('If provided, starts the query at the specified cursor.'),

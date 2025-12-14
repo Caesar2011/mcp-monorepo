@@ -8,15 +8,13 @@ on:
     branches:
       - main
 
-# Set default permissions for the GITHUB_TOKEN for the release job
 permissions:
   contents: write
   pull-requests: write
 
 jobs:
-  # Job 1: Install dependencies once and cache them
-  install:
-    name: Install Dependencies
+  lint:
+    name: Lint Code
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -28,99 +26,84 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'npm'
 
+      - name: Update npm
+        run: npm install -g npm@latest
+
       - name: Install Dependencies
         run: npm ci
-
-      - name: Upload Workspace Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: workspace
-          path: .
-
-  # Jobs 2 & 3: Run lint and test in parallel
-  lint:
-    name: Lint Code
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Workspace Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: workspace
-          path: .
-
-      - name: Setup Node.js from .nvmrc
-        uses: actions/setup-node@v4
-        with:
-          node-version-file: '.nvmrc'
 
       - name: Run Lint
         run: npm run lint
 
   test:
     name: Run Tests
-    needs: install
     runs-on: ubuntu-latest
     steps:
-      - name: Download Workspace Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: workspace
-          path: .
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
       - name: Setup Node.js from .nvmrc
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Install Dependencies
+        run: npm ci
 
       - name: Run Tests
         run: npm test
 
-  # Job 4: Build the project, requires lint and test to pass
   build:
     name: Build Project
     needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
-      - name: Download Workspace Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: workspace
-          path: .
+      - name: Checkout Repo
+        uses: actions/checkout@v4
 
       - name: Setup Node.js from .nvmrc
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      - name: Install Dependencies
+        run: npm ci
 
       - name: Build Project
         run: npm run build
 
-      - name: Upload Built Workspace Artifact
+      - name: Upload Built Project Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: workspace-built
+          name: mcp-monorepo-dist
           path: .
 
-  # Job 5: Release the packages, only on push to main
   release:
     name: Release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Download Built Project Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: mcp-monorepo-dist
+          path: .
+
       # The Changesets action needs the full git history for versioning
+      # We run this after downloading so the checkout doesn't wipe the artifact
       - name: Checkout Repo with full history
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      # It also needs the built code from the previous job
-      - name: Download Built Workspace Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: workspace-built
-          path: .
 
       - name: Setup Node.js from .nvmrc
         uses: actions/setup-node@v4
@@ -131,8 +114,6 @@ jobs:
         id: changesets
         uses: changesets/actions@v1
         with:
-          # The 'build' step is already done in a previous job.
-          # We just tell the action to run the publish command.
           publish: npm run cs:publish
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

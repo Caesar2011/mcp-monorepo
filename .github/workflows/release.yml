@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   build:
-    name: Build Project
+    name: Build & Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo
@@ -41,28 +41,13 @@ jobs:
       - name: Run Tests
         run: npm test
 
-      - name: Upload Built Project Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mcp-monorepo-dist
-          path: .
-
-
   release:
     name: Release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - name: Download Built Project Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: mcp-monorepo-dist
-          path: .
-
-      # The Changesets action needs the full git history for versioning
-      # We run this after downloading so the checkout doesn't wipe the artifact
-      - name: Checkout Repo with full history
+      - name: Checkout Repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -71,10 +56,17 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version-file: '.nvmrc'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Project
+        run: npm run build
 
       - name: Create Release Pull Request or Publish to npm
         id: changesets
-        uses: changesets/actions@v1
+        uses: changesets/action@v1
         with:
           publish: npm run cs:publish
         env:

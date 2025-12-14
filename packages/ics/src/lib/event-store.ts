@@ -1,4 +1,4 @@
-import { access, mkdir, readFile, writeFile } from 'fs/promises'
+import { mkdir, readFile, writeFile } from 'fs/promises'
 import { dirname, join } from 'path'
 
 import { findProjectRoot, RefreshablePromise } from '@mcp-monorepo/shared'
@@ -61,38 +61,42 @@ async function refreshEvents(): Promise<{
   const errors: string[] = []
 
   for (const source of sources) {
+    const dataFile = join(
+      await findProjectRoot(import.meta.dirname),
+      'data',
+      'ics',
+      source.url.replace(/[^a-zA-Z0-9]/g, '_') + '.json',
+    )
+
     try {
-      const dataFile = join(
-        await findProjectRoot(import.meta.dirname),
-        'data',
-        'ics',
-        source.url.replace(/[^a-zA-Z0-9]/g, '_') + '.json',
-      )
-      if (
-        await access(dataFile).then(
-          () => true,
-          () => false,
-        )
-      ) {
-        logger.info('File found. Using cache of: ' + source.name + ' path: ' + dataFile)
+      logger.info(`[${source.name}] Attempting to fetch fresh data...`)
+      const icsContent = await fetch(source.url)
+      if (!icsContent.ok) {
+        throw new Error(`Fetch failed with status ${icsContent.status}`)
+      }
+      const text = await icsContent.text()
+      const parsed = await parseIcsContent(text, source.name)
+
+      events.push(...parsed)
+      await mkdir(dirname(dataFile), { recursive: true })
+      await writeFile(dataFile, JSON.stringify(parsed))
+      logger.info(`[${source.name}] Successfully fetched and cached new data.`)
+    } catch (e) {
+      logger.warn(`[${source.name}] Fetch failed: ${(e as Error).message}. Attempting to use cache.`)
+
+      try {
         const data = await readFile(dataFile, 'utf-8')
         const parsed = JSON.parse(data)
         events.push(...parsed)
-      } else {
-        logger.info('File not found. Fetching source: ' + source.name + ' url: ' + source.url)
-        const icsContent = await fetch(source.url)
-        if (!(icsContent && icsContent.ok)) throw new Error(`Fetch failed for ${source.url}`)
-        const text = await icsContent.text()
-        const parsed = await parseIcsContent(text, source.name)
-        await mkdir(dirname(dataFile), { recursive: true })
-        await writeFile(dataFile, JSON.stringify(parsed))
-        events.push(...parsed)
+        logger.info(`[${source.name}] Successfully loaded data from cache.`)
+      } catch {
+        const finalErrorMsg = `[${source.name}] Fetch failed and cache is unavailable or corrupt.`
+        logger.error(finalErrorMsg)
+        errors.push(finalErrorMsg)
       }
-    } catch (e) {
-      logger.error(e)
-      errors.push(`${source.name}: ${(e as Error).message}`)
     }
   }
+
   errors.forEach((e) => logger.error(e))
   return {
     events,

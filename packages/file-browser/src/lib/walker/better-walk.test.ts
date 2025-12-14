@@ -40,8 +40,8 @@ describe('Better Walker - No ignore files', () => {
       try {
         await symlink(join(tempDir, 'folder1'), join(tempDir, 'symlink-folder'))
         await symlink(join(tempDir, 'file1.txt'), join(tempDir, 'symlink-file'))
-      } catch (error) {
-        // Ignore symlink creation errors
+      } catch {
+        // Ignore symlink creation errors in some environments
       }
     }
   })
@@ -62,7 +62,11 @@ describe('Better Walker - No ignore files', () => {
       'file-with-dashes.log',
     ]
 
-    const result = await collectResults(traverseDirectoryBFS({ absoluteFolderPath: tempDir }))
+    if (platform() !== 'win32') {
+      expectedIncludedFiles.push('symlink-folder', 'symlink-file')
+    }
+
+    const result = await collectResults(traverseDirectoryBFS({ absoluteFolderPath: tempDir, followSymLinks: false }))
     expect(result.sort()).toEqual(expectedIncludedFiles.sort())
   })
 
@@ -78,6 +82,10 @@ describe('Better Walker - No ignore files', () => {
       'file-with-dashes.log',
       'empty-folder',
     ]
+
+    if (platform() !== 'win32') {
+      expectedIncludedFiles.push('symlink-folder', 'symlink-file')
+    }
 
     const result = await collectResults(traverseDirectoryBFS({ absoluteFolderPath: tempDir, includeEmptyDir: true }))
     expect(result.sort()).toEqual(expectedIncludedFiles.sort())
@@ -97,7 +105,9 @@ describe('Better Walker - No ignore files', () => {
         traverseDirectoryBFS({ absoluteFolderPath: tempDir, followSymLinks: false }),
       )
 
-      expect(resultFollow.length).toBeGreaterThanOrEqual(resultNoFollow.length)
+      expect(resultFollow).toContain('symlink-folder/file2.txt')
+      expect(resultNoFollow).not.toContain('symlink-folder/file2.txt')
+      expect(resultNoFollow.length).toBeGreaterThan(0)
     }
   })
 
@@ -152,13 +162,13 @@ describe('Better Walker - Root ignore file only', () => {
 
   it('should apply root ignore rules', async () => {
     const expectedIncludedFiles = [
+      '.gitignore',
+      '.env.example',
       'package.json',
       'README.md',
-      'src/index.js',
       'src/components/Button.js',
+      'src/index.js',
       'tests/test.js',
-      '.env.example',
-      '.gitignore',
     ]
 
     const result = await collectResults(traverseDirectoryBFS({ absoluteFolderPath: tempDir }))

@@ -1,7 +1,7 @@
 import { type Stats } from 'fs'
 import { lstat, readdir, stat } from 'node:fs/promises'
 import { platform } from 'node:os'
-import { basename, join, relative } from 'node:path'
+import { join, relative } from 'node:path'
 
 import { logger } from '@mcp-monorepo/shared'
 
@@ -15,7 +15,7 @@ export function getTypeFromStats(entry: Stats) {
   } else if (entry.isBlockDevice()) {
     return 'block device' as const
   } else if (entry.isCharacterDevice()) {
-    return 'character device' as const
+    return 'character device'
   } else if (entry.isFIFO()) {
     return 'FIFO' as const
   } else if (entry.isSocket()) {
@@ -36,8 +36,7 @@ interface TraverseOptions {
   absoluteFolderPath: string
   /**
    * An array of file names containing ignore patterns.
-   * Each file should contain one pattern per line.
-   * @default []
+   * @default ['.gitignore']
    */
   ignoreFiles?: string[]
   /**
@@ -89,14 +88,14 @@ export async function* traverseDirectoryBFS(
   const ignoreService = new IgnoreFileService()
   ignoreService.addByContent(absoluteFolderPath, '/.git/')
 
-  // Queue stores tuples of [path, depth]
-  const baseDirStats = await lstat(absoluteFolderPath)
-  if (!baseDirStats.isDirectory()) {
+  const baseDirStats = await lstat(absoluteFolderPath).catch(() => undefined)
+  if (!baseDirStats || !baseDirStats.isDirectory()) {
     throw new Error('The provided path is not a directory.')
   }
+
   const queue: { stats: Stats; currentPath: string; currentDepth: number }[] = [
     {
-      stats: await lstat(absoluteFolderPath),
+      stats: baseDirStats,
       currentPath: absoluteFolderPath,
       currentDepth: 0,
     },
@@ -104,72 +103,75 @@ export async function* traverseDirectoryBFS(
   const visited = new Set<string>()
   let yieldedCount = 0
 
-  const addAllChildsToQueue = async (currentPath: string, currentDepth: number) => {
-    const dirents = await readdir(currentPath, { withFileTypes: true })
-    if (dirents.length === 0) return false
-    if (ignoreService.couldDirectoryContainAllowedFiles(currentPath)) {
-      for (const dirent of dirents) {
-        const fullPath = join(currentPath, dirent.name)
-        try {
-          const stats = await lstat(fullPath)
-          if (stats.isFile() && ignoreFiles.includes(basename(fullPath))) {
-            await ignoreService.add(fullPath)
-          }
-          queue.push({
-            stats,
-            currentPath: fullPath,
-            currentDepth: currentDepth + 1,
-          })
-        } catch (error) {
-          logger.error(`Error accessing path ${currentPath}:`, error)
-        }
-      }
-    }
-    return true
-  }
-
-  const yieldPath = (path: string, stats: Stats) => {
-    const relPath = relative(absoluteFolderPath, path).replace(/\\/g, '/')
-    if (relPath !== '') {
-      yieldedCount++
-      return { relPath, type: getTypeFromStats(stats) }
-    }
-    return undefined
-  }
-
-  while (yieldedCount < maxEntries) {
+  while (queue.length > 0 && yieldedCount < maxEntries) {
     const shifted = queue.shift()
     if (!shifted) break
     let { stats } = shifted
     const { currentPath, currentDepth } = shifted
-    if (currentDepth > maxDepth) break
 
-    if (visited.has(currentPath)) {
+    if (currentDepth > maxDepth || visited.has(currentPath)) {
       continue
     }
     visited.add(currentPath)
 
     if (stats.isSymbolicLink() && followSymLinks && !isWindows) {
       try {
-        // follow sym link
-        stats = await stat(currentPath)
+        stats = await stat(currentPath) // Follow symlink
       } catch (error) {
         logger.error(`Error accessing path ${currentPath}:`, error)
+        continue // Skip broken symlinks
       }
     }
 
-    let shouldYield = true
-    if (stats.isDirectory()) {
-      const hasChildren = await addAllChildsToQueue(currentPath, currentDepth)
-      const shouldYieldDir = (!hasChildren && includeEmptyDir) || currentDepth === maxDepth
-      shouldYield = shouldYieldDir && !ignoreService.isPathIgnored(currentPath.replace(/\/?$/, '/'))
-    } else {
-      shouldYield = !ignoreService.isPathIgnored(currentPath)
-    }
+    const relPath = relative(absoluteFolderPath, currentPath).replace(/\\/g, '/')
 
-    if (shouldYield) {
-      const toYield = yieldPath(currentPath, stats)
-      if (toYield) yield toYield
+    // Process directories
+    if (stats.isDirectory()) {
+      // ** THE FIX: Perform a two-pass scan. First, load ignore files. **
+      const dirents = await readdir(currentPath, { withFileTypes: true })
+
+      // Pass 1: Find and immediately process all ignore files in this directory.
+      for (const dirent of dirents) {
+        if (dirent.isFile() && ignoreFiles.includes(dirent.name)) {
+          await ignoreService.add(join(currentPath, dirent.name))
+        }
+      }
+
+      // Pass 2: Process children with the now-updated rules.
+      let hasYieldableChildren = false
+      for (const dirent of dirents) {
+        const childPath = join(currentPath, dirent.name)
+        if (visited.has(childPath)) continue
+
+        const childRelPath = join(relPath, dirent.name)
+
+        if (!ignoreService.isPathIgnored(childPath)) {
+          hasYieldableChildren = true
+        }
+
+        // Prune directories that cannot possibly contain allowed files.
+        if (dirent.isDirectory() && !ignoreService.couldDirectoryContainAllowedFiles(childPath)) {
+          continue
+        }
+
+        try {
+          const childStats = await lstat(childPath)
+          queue.push({ stats: childStats, currentPath: childPath, currentDepth: currentDepth + 1 })
+        } catch (e) {
+          // ignore files that might have been deleted during traversal
+        }
+      }
+
+      if (relPath && includeEmptyDir && !hasYieldableChildren) {
+        yieldedCount++
+        yield { relPath, type: 'folder' }
+      }
+    } else {
+      // Process files
+      if (relPath && !ignoreService.isPathIgnored(currentPath)) {
+        yieldedCount++
+        yield { relPath, type: getTypeFromStats(stats) }
+      }
     }
   }
 }

@@ -1,145 +1,155 @@
 import { readFile } from 'node:fs/promises'
-import { dirname } from 'node:path'
+import { platform } from 'node:os'
+import { dirname, relative } from 'node:path'
 
-type Ruleset = {
-  exact: RegExp
-  partial: RegExp
+const isWindows = platform() === 'win32'
+const toPosixPath = (p: string) => p.replace(/\\/g, '/')
+
+// This function converts a simple glob pattern to a regex.
+function globToRegex(pattern: string): RegExp {
+  const flags = isWindows ? 'i' : ''
+  const regexString = pattern
+    .replace(/[.+?^${}()|[\]\\]/g, '\\$&') // Escape special characters
+    .replace(/\*/g, '.*') // `*` becomes `.*` for this simplified purpose
+  return new RegExp(`^${regexString}$`, flags)
+}
+
+type Rule = {
+  originalPattern: string
+  regex: RegExp
   isAllowRule: boolean
-}[]
+}
 
-/**
- * Service to handle ignored files and directories.
- */
 export class IgnoreFileService {
-  private ignoreFiles: Record<string, Ruleset> = {}
+  private rulesByDirectory: Record<string, Rule[]> = {}
 
-  /**
-   * Adds a file or directory path to the ignore list.
-   * @param filePath The absolute path to the ignore list
-   */
   async add(filePath: string): Promise<void> {
     const directoryPath = dirname(filePath)
     const fileContent = await readFile(filePath, 'utf-8')
     this.addByContent(directoryPath, fileContent)
   }
 
-  /**
-   * Adds a file or directory path to the ignored list.
-   * @param directoryPath The directory to the ignore list it has its effect on
-   * @param fileContent The file content of the ignore list
-   */
   addByContent(directoryPath: string, fileContent: string): void {
-    this.ignoreFiles[directoryPath] = [
-      ...(this.ignoreFiles[directoryPath] ?? []),
-      ...this.deriveRegexps(directoryPath, fileContent),
-    ]
-  }
-
-  /**
-   * Checks if a directory could contain allowed files.
-   * @param dirPath The absolute path to the directory.
-   * @returns {boolean} True if the directory could contain allowed files, false otherwise.
-   */
-  couldDirectoryContainAllowedFiles(dirPath: string): boolean {
-    const unixlikePath = dirPath.replace(/\\/g, '/')
-    return Object.entries(this.ignoreFiles)
-      .filter(([path]) => dirPath.startsWith(path))
-      .sort(([pathA], [pathB]) => pathA.localeCompare(pathB))
-      .flatMap(([, rules]) => rules)
-      .reduce((isAllowed, ruleset) => {
-        if (ruleset.exact.test(unixlikePath)) {
-          return ruleset.isAllowRule
-        } else if (ruleset.isAllowRule && ruleset.partial.test(unixlikePath)) {
-          return true
-        } else return isAllowed
-      }, true)
-  }
-
-  /**
-   * Checks if a file is ignored.
-   * @param filePath The absolute path to the file.
-   * @returns {boolean} True if the file is ignored, false otherwise.
-   */
-  isPathIgnored(filePath: string): boolean {
-    const directoryPath = dirname(filePath)
-    const unixlikePath = filePath.replace(/\\/g, '/')
-    return Object.entries(this.ignoreFiles)
-      .filter(([path]) => directoryPath.startsWith(path))
-      .sort(([pathA], [pathB]) => pathA.localeCompare(pathB))
-      .flatMap(([, rules]) => rules)
-      .reduce((isAllowed, ruleset) => {
-        if (ruleset.exact.test(unixlikePath)) {
-          return !ruleset.isAllowRule
-        } else return isAllowed
-      }, false)
-  }
-
-  private deriveRegexps(absDirPath: string, fileContent: string): Ruleset {
-    return fileContent
-      .split('\n')
-      .map((line) => line.trim())
-      .filter((line) => line.length > 0 && !line.startsWith('#'))
-      .map((line) => {
-        const isAllowRule = line.startsWith('!')
-        const normalLine = (isAllowRule ? line.slice(1) : line).replace(/^\\/, '')
-        return {
-          isAllowRule,
-          exact: IgnoreFileService.getExactRegex(absDirPath, normalLine),
-          partial: IgnoreFileService.getPartialRegex(absDirPath, normalLine),
-        }
-      })
-  }
-
-  public static getExactRegex(absDirPath: string, normalLine: string): RegExp {
-    normalLine = normalLine.replace(/^(\*\*\/)+/g, '')
-
-    // Escape special regex characters
-    const escapedLine = normalLine
-      .replace(/[.+^${}()|\\]/g, '\\$&') // Escape regex special characters
-      .replace(/\*\*/g, '.*') // Replace ** with .*
-      .replace(/\\\.\*/g, '\\.[^/]*') // Replace * with [^/]* (anything except /)
-      .replace(/(?<!\.)\*/g, '[^/]*')
-      .replace(/\?/g, '[^/]') // Replace ? with [^/] (any single character except /)
-
-    // Handle leading `/` (relative to absDirPath)
-    const isAbsolute = normalLine.startsWith('/')
-    absDirPath = absDirPath.replace(/\\/g, '/')
-    absDirPath = absDirPath.endsWith('/') ? absDirPath.substring(0, absDirPath.length - 1) : absDirPath
-    const basePath = isAbsolute ? absDirPath : '.*/'
-
-    // Handle trailing `/` (directory-only match)
-    const regexPattern = `^${basePath}${escapedLine}`
-
-    // Return the compiled regex
-    return new RegExp(regexPattern, 'i') // 'i' for case-insensitivity (Windows support)
-  }
-
-  public static getPartialRegex(absDirPath: string, normalLine: string): RegExp {
-    // Normalize the pattern
-    if (!normalLine.startsWith('/') && !normalLine.startsWith('**')) {
-      normalLine = `**/${normalLine}`
+    const posixDir = toPosixPath(directoryPath)
+    if (!this.rulesByDirectory[posixDir]) {
+      this.rulesByDirectory[posixDir] = []
     }
 
-    // Strip everything after the first `**`
-    const strippedLine = normalLine.split('**')[0]
+    const newRules = fileContent
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line && !line.startsWith('#'))
+      .map((line) => {
+        const isAllowRule = line.startsWith('!')
+        const pattern = isAllowRule ? line.slice(1) : line
 
-    // Escape special regex characters
-    const escapedLine = strippedLine
-      .replace(/[.+^${}()|[\]\\]/g, '\\$&') // Escape regex special characters
-      .replace(/\\\.\*/g, '\\.[^/]*') // Replace * with [^/]* (anything except /)
-      .replace(/(?<!\.)\*/g, '[^/]*')
-      .replace(/\?/g, '[^/]') // Replace ? with [^/] (any single character except /)
+        return {
+          originalPattern: pattern,
+          regex: globToRegex(pattern),
+          isAllowRule,
+        }
+      })
 
-    // Handle leading `/` (relative to absDirPath)
-    const isAbsolute = normalLine.startsWith('/')
-    absDirPath = absDirPath.replace(/\\/g, '/')
-    absDirPath = absDirPath.endsWith('/') ? absDirPath.substring(0, absDirPath.length - 1) : absDirPath
-    const basePath = isAbsolute ? absDirPath : '.*/'
+    this.rulesByDirectory[posixDir] = this.rulesByDirectory[posixDir].concat(newRules)
+  }
 
-    // Construct the regex pattern
-    const regexPattern = `^${basePath}${escapedLine}`
+  isPathIgnored(absolutePath: string): boolean {
+    const posixPath = toPosixPath(absolutePath)
+    let isIgnored = false
 
-    // Return the compiled regex
-    return new RegExp(regexPattern, 'i') // 'i' for case-insensitivity (Windows support)
+    const applicableDirs = Object.keys(this.rulesByDirectory)
+      .filter((dir) => posixPath.startsWith(dir))
+      .sort((a, b) => a.length - b.length)
+
+    for (const dir of applicableDirs) {
+      const relativePath = toPosixPath(relative(dir, posixPath))
+      const rules = this.rulesByDirectory[dir]
+
+      for (const rule of rules) {
+        let match = false
+
+        // Patterns with a slash are matched relative to the .gitignore file.
+        if (rule.originalPattern.includes('/')) {
+          const patternToCheck = rule.originalPattern.endsWith('/')
+            ? rule.originalPattern.slice(0, -1)
+            : rule.originalPattern
+
+          // Check if the relative path starts with or matches the pattern
+          if (relativePath === patternToCheck || relativePath.startsWith(patternToCheck + '/')) {
+            match = true
+          } else {
+            // For patterns with wildcards, use regex matching
+            const patternRegex = globToRegex(patternToCheck)
+            const pathSegments = relativePath.split('/')
+            // Check against full path and each potential subpath
+            for (let i = 0; i < pathSegments.length; i++) {
+              const testPath = pathSegments.slice(0, i + 1).join('/')
+              if (patternRegex.test(testPath)) {
+                match = true
+                break
+              }
+            }
+          }
+        }
+        // Patterns without a slash are matched against any path segment.
+        else {
+          const pathSegments = relativePath.split('/')
+          if (pathSegments.some((segment) => rule.regex.test(segment))) {
+            match = true
+          }
+        }
+
+        if (match) {
+          isIgnored = !rule.isAllowRule
+        }
+      }
+    }
+    return isIgnored
+  }
+
+  couldDirectoryContainAllowedFiles(absolutePath: string): boolean {
+    // If the directory itself is not ignored, we must enter it.
+    if (!this.isPathIgnored(absolutePath)) {
+      return true
+    }
+
+    // If it IS ignored, we only need to enter if an "allow" rule could apply to a child.
+    const posixPath = toPosixPath(absolutePath)
+    const applicableDirs = Object.keys(this.rulesByDirectory)
+      .filter((dir) => posixPath.startsWith(dir))
+      .sort((a, b) => a.length - b.length) // Process from root to nested
+
+    for (const dir of applicableDirs) {
+      const relativePath = toPosixPath(relative(dir, posixPath))
+      const rules = this.rulesByDirectory[dir]
+
+      for (const rule of rules) {
+        if (!rule.isAllowRule) continue
+
+        // Check if this allow rule could apply to files within this directory
+        const pattern = rule.originalPattern
+
+        // Remove leading slash if present for comparison
+        const normalizedPattern = pattern.startsWith('/') ? pattern.slice(1) : pattern
+        const normalizedRelPath = relativePath
+
+        // Check if the pattern could match something inside this directory
+        if (pattern.includes('/')) {
+          // Pattern with slash: check if it starts with or is within our path
+          if (
+            normalizedPattern.startsWith(normalizedRelPath + '/') ||
+            normalizedPattern.startsWith(normalizedRelPath) ||
+            normalizedRelPath.startsWith(normalizedPattern.split('/')[0])
+          ) {
+            return true
+          }
+        } else {
+          // Pattern without slash: could match any file in any subdirectory
+          return true
+        }
+      }
+    }
+
+    return false
   }
 }

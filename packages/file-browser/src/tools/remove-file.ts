@@ -6,7 +6,7 @@ import { z } from 'zod'
 
 import { getWorkingDir } from '../lib/env.js'
 import { validateExists, validateWithinBasePath } from '../lib/validators.js'
-import { getTypeFromStats } from '../lib/walker/better-walker.js'
+import { getTypeFromStats, type StatType } from '../lib/walker/better-walker.js'
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
@@ -48,13 +48,13 @@ export const registerRemoveFileTool = (server: McpServer) =>
 
       return {
         removed: filepath,
-        type,
+        type: type as StatType,
       }
     },
     formatter({ removed, type }) {
       return {
         removed,
-        type,
+        type: type as StatType,
       }
     },
   })

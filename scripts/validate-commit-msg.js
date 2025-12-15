@@ -25,6 +25,10 @@ function validateCommitMessage(message) {
     return false
   }
 
+  if (trimmedMessage === 'Version Packages') {
+    return true
+  }
+
   const match = COMMIT_REGEX.exec(trimmedMessage)
 
   if (!match) {

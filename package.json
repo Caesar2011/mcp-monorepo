@@ -29,6 +29,8 @@
   "description": "MCP Tools Monorepo with TypeScript support",
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
+    "@changesets/git": "^3.0.4",
+    "@changesets/write": "^0.4.0",
     "@eslint/js": "^9.29.0",
     "@types/node": "^22.14.1",
     "@typescript-eslint/eslint-plugin": "^8.34.0",

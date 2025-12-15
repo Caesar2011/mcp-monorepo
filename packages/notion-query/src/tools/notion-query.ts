@@ -55,9 +55,7 @@ export const registerNotionQueryTool = (server: McpServer) =>
       const apiUrl = new URL(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`)
 
       if (filter_properties && filter_properties.length > 0) {
-        filter_properties.forEach((prop) => {
-          apiUrl.searchParams.append('filter_properties', prop)
-        })
+        apiUrl.searchParams.append('filter_properties[]', filter_properties.join(','))
       }
 
       const body: Record<string, unknown> = {}

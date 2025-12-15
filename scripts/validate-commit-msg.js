@@ -3,7 +3,7 @@ import fs from 'fs'
 
 // --- Configuration ---
 // These values should be kept in sync with your team's conventions.
-const ALLOWED_TYPES = ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'ci', 'chore', 'revert']
+const ALLOWED_TYPES = ['feat', 'fix', 'docs', 'style', 'refactor', 'perf', 'test', 'build', 'revert']
 const ALLOWED_BUMP_TYPES = ['major', 'minor', 'patch']
 const COMMIT_REGEX = new RegExp(`^(${ALLOWED_TYPES.join('|')})\\/(${ALLOWED_BUMP_TYPES.join('|')}):\\s(.+)`)
 

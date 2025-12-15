@@ -25,7 +25,7 @@ function validateCommitMessage(message) {
     return false
   }
 
-  if (trimmedMessage === 'Version Packages') {
+  if (trimmedMessage === 'Version Packages' || trimmedMessage.startsWith('Merge pull request #')) {
     return true
   }
 

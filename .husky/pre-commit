@@ -1,3 +1,24 @@
-npm test
-npm run typecheck
-npm run lint-staged
+echo "Running pre-commit checks..."
+
+echo "\n[1/3] Running lint-staged..."
+npx lint-staged
+if [ $? -ne 0 ]; then
+  echo "\nlint-staged failed. Aborting commit."
+  exit 1
+fi
+
+echo "\n[2/3] Running type-checking on changed packages..."
+npm run typecheck:changed
+if [ $? -ne 0 ]; then
+  echo "\nType-checking failed. Aborting commit."
+  exit 1
+fi
+
+echo "\n[3/3] Running tests on changed packages..."
+npm run test:changed
+if [ $? -ne 0 ]; then
+  echo "\nTests failed. Aborting commit."
+  exit 1
+fi
+
+echo "\n✓ Pre-commit checks passed."

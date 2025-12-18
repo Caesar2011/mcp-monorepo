@@ -1,5 +1,11 @@
 # @mcp-monorepo/ics
 
+## 1.2.0
+
+### Minor Changes
+
+- 5f142de: add timeZone support to formatDate, handle exdate and cancelled recurrences, and replace rawEvents with getRawEvents singleton
+
 ## 1.1.0
 
 ### Minor Changes

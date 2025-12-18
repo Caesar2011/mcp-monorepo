@@ -1,6 +1,6 @@
 {
   "name": "@mcp-monorepo/weather",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "type": "module",
   "description": "Weather MCP tools (geocoding, weather-by-coords) for ModelContextProtocol.",
   "main": "dist/index.js",

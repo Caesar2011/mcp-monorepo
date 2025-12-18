@@ -36,9 +36,22 @@ export function resolveRecurrence(events: RawIcalEvent[], startDate: Date, endDa
     source: event.source,
   })
 
+  const getExceptionTimestamps = (event: RawIcalEvent): number[] => {
+    const exdateTimes = event.exdate ? Object.values(event.exdate).map((d) => d.getTime()) : []
+    const cancelledRecurrenceTimes = event.recurrences
+      ? Object.values(event.recurrences)
+          .filter((r) => r.status === 'CANCELLED')
+          .map((r) => r.dtstart.getTime())
+      : []
+    return [...exdateTimes, ...cancelledRecurrenceTimes]
+  }
+
   const expandSingleEvent = (event: RawIcalEvent): CalendarEvent[] => {
     if (!event.rrule) {
-      return [createCalendarEvent(event)]
+      if (event.dtstart >= startDate && event.dtstart <= endDate) {
+        return [createCalendarEvent(event)]
+      }
+      return []
     }
 
     try {
@@ -48,15 +61,26 @@ export function resolveRecurrence(events: RawIcalEvent[], startDate: Date, endDa
         return event.dtstart >= startDate && event.dtstart <= endDate ? [createCalendarEvent(event)] : []
       }
 
+      const exceptionTimes = getExceptionTimestamps(event)
       const duration = event.dtend && event.dtstart ? event.dtend.getTime() - event.dtstart.getTime() : 0
 
-      return recurrences.map((recurrenceDate) => {
-        const adjustedStart = getAdjustedRecurrenceDate(event.rruleOptions, event.dtstart, recurrenceDate)
-        const adjustedEnd = duration ? new Date(adjustedStart.getTime() + duration) : undefined
-        return createCalendarEvent(event, adjustedStart, adjustedEnd, adjustedStart.getTime().toString())
-      })
+      return recurrences
+        .map((recurrenceDate) => {
+          const adjustedStart = getAdjustedRecurrenceDate(event.rruleOptions, event.dtstart, recurrenceDate)
+
+          if (exceptionTimes.includes(adjustedStart.getTime())) {
+            return undefined
+          }
+
+          const adjustedEnd = duration ? new Date(adjustedStart.getTime() + duration) : undefined
+          return createCalendarEvent(event, adjustedStart, adjustedEnd, adjustedStart.getTime().toString())
+        })
+        .filter((e) => e !== undefined)
     } catch {
-      return [createCalendarEvent(event)]
+      if (event.dtstart >= startDate && event.dtstart <= endDate) {
+        return [createCalendarEvent(event)]
+      }
+      return []
     }
   }
 

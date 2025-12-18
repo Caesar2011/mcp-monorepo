@@ -1,3 +1,5 @@
+import { type VEventStatus } from 'node-ical'
+
 export interface CalendarEvent {
   uid: string
   summary: string
@@ -26,6 +28,9 @@ export interface RawIcalEvent {
   source: string
   rrule?: RRuleLike
   rruleOptions?: { tzid?: string; dtstart: Date }
+  exdate?: { [key: string]: Date }
+  recurrences?: { [key: string]: RawIcalEvent }
+  status?: VEventStatus
 }
 
 export interface CalendarSource {

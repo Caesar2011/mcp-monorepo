@@ -2,7 +2,7 @@ import { registerTool } from '@mcp-monorepo/shared'
 import { performKeywordSearch } from '@mcp-monorepo/shared'
 import { z } from 'zod'
 
-import { rawEvents } from '../lib/event-store.js'
+import { getRawEvents } from '../lib/event-store.js'
 import { formatDate } from '../lib/format-date.js'
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -43,7 +43,7 @@ export const registerSearchEventsTool = (server: McpServer) =>
         throw new Error('Search query cannot be empty')
       }
 
-      const events = await rawEvents
+      const events = await getRawEvents()
 
       const results = performKeywordSearch(
         query,

@@ -7,6 +7,10 @@ import ical, { type VEvent } from 'node-ical'
 
 import { type CalendarSource, type RawIcalEvent, type RRuleLike } from './types.js'
 
+export const throwForNoIcsUrls = (): never => {
+  throw new Error('No valid ICS URLs provided in environment variables.')
+}
+
 export const getIcsUrls = (): CalendarSource[] => {
   const envVars = process.env
   const calendarSources: CalendarSource[] = []
@@ -25,7 +29,7 @@ export const getIcsUrls = (): CalendarSource[] => {
   })
 
   if (calendarSources.length === 0) {
-    throw new Error('No valid ICS URLs provided in environment variables.')
+    throwForNoIcsUrls()
   }
 
   return calendarSources
@@ -33,25 +37,34 @@ export const getIcsUrls = (): CalendarSource[] => {
 
 export const parseIcsContent = async (icsContent: string, source: string): Promise<RawIcalEvent[]> => {
   const entries = Object.values(await ical.async.parseICS(icsContent))
-  return entries
-    .filter((e) => e.type === 'VEVENT')
-    .map((event: VEvent) => {
-      return {
-        uid: event.uid,
-        summary: event.summary,
-        description: event.description,
-        location: event.location,
-        dtstart: event.start,
-        dtend: event.end,
-        allDay: event.datetype === 'date',
-        source,
-        rrule: event.rrule as RRuleLike | undefined,
-        rruleOptions: event.rrule ? (event.rrule as RRuleLike).origOptions : undefined,
-      }
-    })
+  return entries.filter((e) => e.type === 'VEVENT').map((event: VEvent) => convertEvent(event, source))
 }
 
-async function refreshEvents(): Promise<{
+export const convertEvent = (event: VEvent, source: string): RawIcalEvent => {
+  let recurrences: Record<string, RawIcalEvent> | undefined = undefined
+  if (event.recurrences) {
+    recurrences = Object.fromEntries(
+      Object.entries(event.recurrences).map(([key, rec]) => [key, convertEvent(rec, source)]),
+    )
+  }
+  return {
+    uid: event.uid,
+    summary: event.summary,
+    description: event.description,
+    location: event.location,
+    dtstart: event.start,
+    dtend: event.end,
+    allDay: event.datetype === 'date',
+    source,
+    rrule: event.rrule as RRuleLike | undefined,
+    rruleOptions: event.rrule ? (event.rrule as RRuleLike).origOptions : undefined,
+    exdate: event.exdate,
+    recurrences,
+    status: event.status,
+  } satisfies RawIcalEvent
+}
+
+export async function refreshEvents(): Promise<{
   events: RawIcalEvent[]
   errors: string[]
 }> {
@@ -104,4 +117,15 @@ async function refreshEvents(): Promise<{
   }
 }
 
-export const rawEvents = new RefreshablePromise(refreshEvents)
+let rawEventsInstance: RefreshablePromise<{ events: RawIcalEvent[]; errors: string[] }>
+
+/**
+ * Gets the singleton instance of the RefreshablePromise for raw ICAL events.
+ * The instance is created on the first call.
+ */
+export function getRawEvents() {
+  if (!rawEventsInstance) {
+    rawEventsInstance = new RefreshablePromise(refreshEvents)
+  }
+  return rawEventsInstance
+}

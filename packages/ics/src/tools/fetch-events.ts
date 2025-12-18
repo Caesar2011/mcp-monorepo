@@ -1,7 +1,7 @@
 import { registerTool } from '@mcp-monorepo/shared'
 import { z } from 'zod'
 
-import { rawEvents } from '../lib/event-store.js'
+import { getRawEvents } from '../lib/event-store.js'
 import { filterEvents } from '../lib/filter-events.js'
 import { formatDate } from '../lib/format-date.js'
 import { resolveRecurrence } from '../lib/recurrrence.js'
@@ -40,7 +40,7 @@ export const registerFetchEventsTool = (server: McpServer) =>
       const end = new Date(endDate + 'T23:59:59')
       if (start > end) throw new Error('Error: Start date must be before end date')
 
-      const events = await rawEvents
+      const events = await getRawEvents()
       const expandedEvents = resolveRecurrence(events.events, start, end)
       const filteredEvents = filterEvents(expandedEvents, start, end)
       return {

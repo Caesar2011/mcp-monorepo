@@ -1,6 +1,6 @@
 {
   "name": "@mcp-monorepo/ics",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "type": "module",
   "description": "MCP server for calendar tools using ICS/ical feeds",
   "main": "dist/index.js",

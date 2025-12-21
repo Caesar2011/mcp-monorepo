@@ -46,6 +46,7 @@ const parseMessage = (...message: unknown[]): string => {
 
       // eslint-disable-next-line no-restricted-syntax
       if (typeof item === 'object' && item !== null) {
+        if (item instanceof Error) return item.stack ?? item.message
         try {
           const baseObjectString = JSON.stringify(item, replacer, 2)
 

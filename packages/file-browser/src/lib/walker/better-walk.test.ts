@@ -222,7 +222,7 @@ describe('Better Walker - Root and nested ignore files', () => {
     await rm(tempDir, { recursive: true, force: true })
   })
 
-  it('should apply nested ignore rules correctly', async () => {
+  it('should apply nested ignore rules', async () => {
     const expectedIncludedFiles = [
       '.gitignore',
       'config/dev.json',

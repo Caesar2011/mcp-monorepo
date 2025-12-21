@@ -1,6 +1,6 @@
 /**
  * Splits a command string into an array of arguments,
- * correctly handling single quotes, double quotes, and escaped characters.
+ * handling single quotes, double quotes, and escaped characters.
  *
  * @param commandString The input command string.
  * @returns An array of strings, where each string is an argument.

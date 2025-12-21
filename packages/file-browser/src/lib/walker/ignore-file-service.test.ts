@@ -38,7 +38,7 @@ describe('IgnoreFileService', () => {
       expect(service.isPathIgnored('/project/important.log')).toBe(true)
     })
 
-    it('should handle nested .gitignore files correctly', () => {
+    it('should handle nested .gitignore files', () => {
       service.addByContent('/project', 'dist/')
       service.addByContent('/project/dist', '!index.html')
       expect(service.isPathIgnored('/project/dist/bundle.js')).toBe(true)

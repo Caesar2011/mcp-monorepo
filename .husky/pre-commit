@@ -8,7 +8,7 @@ if [ $? -ne 0 ]; then
 fi
 
 echo "\n[2/3] Running type-checking on changed packages..."
-npm run typecheck
+npm run typecheck:changed
 if [ $? -ne 0 ]; then
   echo "\nType-checking failed. Aborting commit."
   exit 1

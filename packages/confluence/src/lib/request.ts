@@ -1,7 +1,6 @@
 /**
  * Generic library function for making Confluence API requests
  */
-import { logger } from '@mcp-monorepo/shared'
 
 import { getConfluenceBaseUrl, getConfluenceToken } from './confluence-env.js'
 import { type ConfluenceErrorResponse } from './types.js'
@@ -40,7 +39,6 @@ export async function requestConfluence<T>(options: ConfluenceRequestOptions): P
     requestHeaders['Content-Type'] = 'application/json'
   }
 
-  logger.log(url)
   const response = await fetch(url.toString(), {
     method,
     headers: requestHeaders,

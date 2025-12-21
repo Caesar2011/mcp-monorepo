@@ -68,6 +68,6 @@ describe('tools/fetch-latest-mails', () => {
     const responseData = JSON.parse(result.content[0].text).response
 
     expect(responseData.success).toBe(false)
-    expect(responseData.error).toBe('MAIL_ACCOUNTS env variable is not configured correctly')
+    expect(responseData.error).toBe('MAIL_ACCOUNTS env variable is not configured')
   })
 })

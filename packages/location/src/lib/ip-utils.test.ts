@@ -8,7 +8,7 @@ import { isValidIpAddress, getCurrentIpAddress } from './ip-utils.js'
 
 describe('IP Utils', () => {
   describe('isValidIpAddress', () => {
-    it('should validate IPv4 addresses correctly', () => {
+    it('should validate IPv4 addresses', () => {
       expect(isValidIpAddress('192.168.1.1')).toBe(true)
       expect(isValidIpAddress('8.8.8.8')).toBe(true)
       expect(isValidIpAddress('255.255.255.255')).toBe(true)
@@ -22,7 +22,7 @@ describe('IP Utils', () => {
       expect(isValidIpAddress('not-an-ip')).toBe(false)
     })
 
-    it('should validate IPv6 addresses correctly', () => {
+    it('should validate IPv6 addresses', () => {
       expect(isValidIpAddress('2001:0db8:85a3:0000:0000:8a2e:0370:7334')).toBe(true)
       expect(isValidIpAddress('fe80:0000:0000:0000:0202:b3ff:fe1e:8329')).toBe(true)
     })

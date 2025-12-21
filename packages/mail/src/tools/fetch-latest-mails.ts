@@ -38,7 +38,7 @@ export const registerFetchLatestMailsTool = (server: McpServer) =>
     async fetcher() {
       const accounts = parseMailAccounts()
       if (!accounts.length) {
-        throw new Error('MAIL_ACCOUNTS env variable is not configured correctly')
+        throw new Error('MAIL_ACCOUNTS env variable is not configured')
       }
 
       const results: MailAccountResult[] = []

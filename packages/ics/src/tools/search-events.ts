@@ -2,7 +2,8 @@ import { registerTool } from '@mcp-monorepo/shared'
 import { performKeywordSearch } from '@mcp-monorepo/shared'
 import { z } from 'zod'
 
-import { getRawEvents } from '../lib/event-store.js'
+import { getUnexpandedEvents, type UnexpandedEvent } from '../ics-parser/index.js'
+import { getPreparedIcs } from '../lib/event-store-2.js'
 import { formatDate } from '../lib/format-date.js'
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -12,7 +13,7 @@ export const registerSearchEventsTool = (server: McpServer) =>
     name: 'search-events',
     title: 'Search Calendar Events',
     description:
-      'Search through all calendar events using keywords. Searches in title and description, sorts by number of matching words.',
+      'Search through all calendar events using keywords. Searches in title, description, location, attendees, and categories. Sorts by number of matching words.',
     inputSchema: {
       query: z
         .string()
@@ -31,6 +32,13 @@ export const registerSearchEventsTool = (server: McpServer) =>
           source: z.string(),
           matchCount: z.number(),
           matchedWords: z.array(z.string()),
+          organizer: z.any().optional(),
+          attendees: z.array(z.any()).optional(),
+          categories: z.array(z.string()).optional(),
+          url: z.string().optional(),
+          rrule: z.any().optional(),
+          rdates: z.array(z.string()).optional(),
+          exdates: z.array(z.string()).optional(),
         }),
       ),
       errors: z.array(z.string()),
@@ -43,42 +51,70 @@ export const registerSearchEventsTool = (server: McpServer) =>
         throw new Error('Search query cannot be empty')
       }
 
-      const events = await getRawEvents()
+      const { prepared, errors } = await getPreparedIcs()
+      const unexpandedEvents = getUnexpandedEvents(prepared)
 
       const results = performKeywordSearch(
         query,
-        events.events,
-        (event) => [event.summary, event.description, event.location, event.source],
-        (a, b) => new Date(a.dtstart).getTime() - new Date(b.dtstart).getTime(),
+        unexpandedEvents,
+        (event) => {
+          const source = event.customProperties?.['X-MCP-SOURCE']?.value ?? 'Unknown'
+          const customPropValues = event.customProperties
+            ? Object.values(event.customProperties).map((p) => p.value)
+            : []
+          const attendeeNames = event.attendees
+            ? event.attendees.flatMap((a) => [a.email, a.commonName]).filter((x) => x !== undefined)
+            : []
+
+          return [
+            event.summary,
+            event.description,
+            event.location,
+            source,
+            ...(event.categories || []),
+            event.organizer?.commonName,
+            ...attendeeNames,
+            event.url,
+            ...customPropValues,
+          ].filter((v): v is string => !!v)
+        },
+        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
       )
 
-      // Limit results based on the specified `limit`
       const limitedResults = results.slice(0, limit)
 
       return {
         results: limitedResults,
         total: results.length,
         searchQuery: query,
-        errors: events.errors,
+        errors: errors,
       }
     },
     formatter({ results, total, searchQuery, errors }) {
       const formattedEvents = results.map((result) => {
-        const { description, dtend, dtstart, location, source, summary, uid } = result.match
+        const event = result.match as UnexpandedEvent
+        const source = event.customProperties?.['X-MCP-SOURCE']?.value ?? 'Unknown'
+
         return {
-          summary: summary,
-          start: formatDate(dtstart, true),
-          ...(dtend ? { end: formatDate(dtend, true) } : {}),
-          description: description
-            ? description.length > 400
-              ? description.substring(0, 400) + '...'
-              : description
-            : undefined,
-          location: location,
-          uid: uid,
+          summary: event.summary,
+          start: formatDate(new Date(event.start), event.allDay),
+          ...(event.end ? { end: formatDate(new Date(event.end), event.allDay) } : {}),
+          description:
+            event.description && event.description.length > 400
+              ? event.description.substring(0, 400) + '...'
+              : event.description,
+          location: event.location,
+          uid: event.uid,
           source: source,
           matchCount: result.matchCount,
           matchedWords: result.matchedWords,
+          organizer: event.organizer,
+          attendees: event.attendees,
+          categories: event.categories,
+          url: event.url,
+          rrule: event.rrule,
+          rdates: event.rdates,
+          exdates: event.exdates,
         }
       })
 

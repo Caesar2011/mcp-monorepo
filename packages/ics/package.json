@@ -18,6 +18,7 @@
     "build": "tsc -b",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
+    "demo": "node --inspect dist/demo.js",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
@@ -25,16 +26,19 @@
     "clean": "rimraf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
+    "@mcp-monorepo/shared": "*",
     "@modelcontextprotocol/sdk": "^1.23.1",
-    "zod": "^3.25.76",
     "date-fns-tz": "^3.2.0",
-    "node-ical": "^0.20.1",
-    "@mcp-monorepo/shared": "*"
+    "luxon": "^3.7.2",
+    "node-ical": "^0.22.1",
+    "rrule": "^2.8.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@types/luxon": "^3.7.1",
     "@types/node": "^22.14.1",
+    "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4",
-    "rimraf": "^6.0.1"
+    "vitest": "^3.2.4"
   }
 }

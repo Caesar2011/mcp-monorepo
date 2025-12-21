@@ -1,10 +1,9 @@
 import { registerTool } from '@mcp-monorepo/shared'
 import { z } from 'zod'
 
-import { getRawEvents } from '../lib/event-store.js'
-import { filterEvents } from '../lib/filter-events.js'
+import { getEventsBetween } from '../ics-parser/index.js'
+import { getPreparedIcs } from '../lib/event-store-2.js'
 import { formatDate } from '../lib/format-date.js'
-import { resolveRecurrence } from '../lib/recurrrence.js'
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
@@ -12,7 +11,7 @@ export const registerFetchEventsTool = (server: McpServer) =>
   registerTool(server, {
     name: 'fetch-events',
     title: 'Fetch Calendar Events',
-    description: 'Fetches events from multiple ICS calendar URLs for a specified time period.',
+    description: 'Fetches events from multiple ICS calendar URLs for a specified time period. cc',
     inputSchema: {
       offset: z.number().default(0).describe('Offset to start returning events from (default: 0)'),
       limit: z.number().default(50).describe('Maximum number of events to return (default: 50)'),
@@ -36,33 +35,44 @@ export const registerFetchEventsTool = (server: McpServer) =>
     },
     isReadOnly: true,
     async fetcher({ endDate, limit, offset, startDate }) {
-      const start = new Date(startDate + 'T00:00:00')
-      const end = new Date(endDate + 'T23:59:59')
-      if (start > end) throw new Error('Error: Start date must be before end date')
+      if (new Date(startDate) > new Date(endDate)) {
+        throw new Error('Error: Start date must be before end date')
+      }
 
-      const events = await getRawEvents()
-      const expandedEvents = resolveRecurrence(events.events, start, end)
-      const filteredEvents = filterEvents(expandedEvents, start, end)
+      // Get the prepared (and cached) data from the new store
+      const { prepared, errors } = await getPreparedIcs()
+
+      // The new parser requires UTC ISO strings for the range
+      const startIso = new Date(`${startDate}T00:00:00.000Z`).toISOString()
+      const endIso = new Date(`${endDate}T23:59:59.999Z`).toISOString()
+
+      // Let the new parser do all the heavy lifting of expanding and filtering
+      const expandedEvents = getEventsBetween(prepared, startIso, endIso)
+
       return {
-        events: filteredEvents.slice(offset, offset + limit),
-        errors: events.errors,
-        total: filteredEvents.length,
+        events: expandedEvents.slice(offset, offset + limit),
+        errors,
+        total: expandedEvents.length,
       }
     },
     formatter({ events, errors, total }) {
-      const formattedEvents = events.map((event) => ({
-        summary: event.summary,
-        start: formatDate(event.dtstart, event.allDay),
-        ...(event.dtend ? { end: formatDate(event.dtend, event.allDay) } : {}),
-        description: event.description
-          ? event.description.length > 400
-            ? event.description.substring(0, 400) + '...'
-            : event.description
-          : undefined,
-        location: event.location,
-        uid: event.uid,
-        source: event.source,
-      }))
+      const formattedEvents = events.map((event) => {
+        const source = event.customProperties?.['X-MCP-SOURCE']?.value ?? 'Unknown'
+
+        return {
+          summary: event.summary,
+          start: formatDate(new Date(event.start), event.allDay),
+          ...(event.end ? { end: formatDate(new Date(event.end), event.allDay) } : {}),
+          description: event.description
+            ? event.description.length > 400
+              ? event.description.substring(0, 400) + '...'
+              : event.description
+            : undefined,
+          location: event.location,
+          uid: event.uid,
+          source: source,
+        }
+      })
 
       return {
         events: formattedEvents,

@@ -1,13 +1,20 @@
-export function formatDate(date: Date, allDay = false, timeZone?: string): string {
+/**
+ * Formats a Date object into a string.
+ * @param date The date to format.
+ * @param allDay If true, only the date part is returned (YYYY-MM-DD).
+ * @returns A formatted date string.
+ */
+export function formatDate(date: Date, allDay: boolean): string {
   if (allDay) {
-    return new Date(date).toLocaleDateString('en-US', {
+    // For all-day events, return in YYYY-MM-DD format
+    return date.toLocaleString('en-US', {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-      timeZone,
     })
   }
+
   return date.toLocaleString('en-US', {
     weekday: 'long',
     year: 'numeric',
@@ -15,6 +22,5 @@ export function formatDate(date: Date, allDay = false, timeZone?: string): strin
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone,
   })
 }

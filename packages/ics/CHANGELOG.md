@@ -1,5 +1,16 @@
 # @mcp-monorepo/ics
 
+## 1.3.0
+
+### Minor Changes
+
+- 435af78: introduce ICS parser with timezone and recurrence, replace legacy event-store with prepared cache, update tools and tests
+
+### Patch Changes
+
+- Updated dependencies [63e57bb]
+  - @mcp-monorepo/shared@1.0.1
+
 ## 1.2.0
 
 ### Minor Changes

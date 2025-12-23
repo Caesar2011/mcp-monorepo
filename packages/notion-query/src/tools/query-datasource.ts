@@ -1,7 +1,8 @@
 import { registerTool } from '@mcp-monorepo/shared'
-import { Client, type QueryDataSourceParameters } from '@notionhq/client'
+import { type QueryDataSourceParameters } from '@notionhq/client'
 import { z } from 'zod'
 
+import { getNotionClient } from '../lib/client.js'
 import { simplifyNotionPages } from '../lib/parser.js'
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -56,16 +57,11 @@ export const registerQueryDatasourceTool = (server: McpServer) =>
         throw new Error('Invalid data_source_url format. Must start with "collection://".')
       }
 
-      const NOTION_API_KEY = process.env.NOTION_API_KEY
-      if (!NOTION_API_KEY) {
-        throw new Error('NOTION_API_KEY environment variable is not set.')
-      }
-
-      const notion = new Client({ auth: NOTION_API_KEY })
+      const notion = getNotionClient()
       const dataSourceId = data_source_url.substring('collection://'.length)
 
       try {
-        const response = await notion.dataSources.query({
+        return await notion.dataSources.query({
           data_source_id: dataSourceId,
           filter: filter as QueryDataSourceParameters['filter'],
           sorts: sorts as QueryDataSourceParameters['sorts'],
@@ -73,8 +69,6 @@ export const registerQueryDatasourceTool = (server: McpServer) =>
           page_size,
           filter_properties,
         })
-
-        return response
       } catch (error: unknown) {
         if (error instanceof Error) {
           throw new Error(`Notion API request failed: ${error.message}`)

@@ -5,9 +5,7 @@
   "description": "Slack MCP to access workspace without bot account or app",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "@mcp-monorepo/slack": "./dist/index.js"
-  },
+  "bin": "./dist/index.js",
   "files": [
     "dist"
   ],
@@ -26,15 +24,15 @@
     "clean": "rimraf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
+    "@mcp-monorepo/shared": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "zod": "^3.25.76",
     "@slack/web-api": "^7.9.3",
-    "@mcp-monorepo/shared": "*"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@types/node": "^22.14.1",
+    "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
-    "vitest": "^3.2.4",
-    "rimraf": "^6.0.1"
+    "vitest": "^3.2.4"
   }
 }

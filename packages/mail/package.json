@@ -5,9 +5,7 @@
   "description": "MCP server for mail tools (fetch, read, search, mark as seen).",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "@mcp-monorepo/mail": "./dist/index.js"
-  },
+  "bin": "./dist/index.js",
   "files": [
     "dist"
   ],
@@ -25,18 +23,18 @@
     "clean": "rimraf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@mcp-monorepo/shared": "*",
+    "@mcp-monorepo/shared": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "zod": "^3.25.76",
+    "html-to-text": "^9.0.5",
     "imapflow": "^1.0.191",
-    "html-to-text": "^9.0.5"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^22.14.1",
-    "typescript": "^5.8.3",
-    "vitest": "^3.2.4",
-    "rimraf": "^6.0.1",
+    "@types/html-to-text": "^9.0.4",
     "@types/imapflow": "^1.0.23",
-    "@types/html-to-text": "^9.0.4"
+    "@types/node": "^22.14.1",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }

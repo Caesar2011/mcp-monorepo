@@ -9,7 +9,7 @@ const c = { reset: '\x1b[0m', yellow: '\x1b[33m', cyan: '\x1b[36m', red: '\x1b[3
 async function main() {
   const commandToRun = process.argv[2]
   if (!commandToRun) {
-    console.error(`${c.red}Error: No npm script command provided to run-on-changed.js.${c.reset}`)
+    console.error(`${c.red}Error: No yarn script command provided to run-on-changed.js.${c.reset}`)
     console.error(`Usage: node scripts/run-on-changed.js <command>`)
     process.exit(1)
   }
@@ -31,9 +31,9 @@ async function main() {
 
   console.log('Found changes in:', changedPackageNames.join(', '))
 
-  // Construct the npm command with --workspace flags for each changed package
-  const workspaceFlags = changedPackageNames.map((name) => `--workspace=${name}`).join(' ')
-  const command = `npm run ${commandToRun} ${workspaceFlags}`
+  // Construct the yarn command with --include flags for each changed package
+  const includeFlags = changedPackageNames.map((name) => `--include ${name}`).join(' ')
+  const command = `yarn workspaces foreach -A -p -t ${includeFlags} run ${commandToRun}`
 
   console.log(`Executing: ${c.cyan}${command}${c.reset}\n`)
 

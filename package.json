@@ -8,23 +8,25 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "build:workspaces": "npm run build --workspaces",
-    "dev": "npm run dev --workspaces",
-    "test": "npm run test --workspaces",
+    "build:workspaces": "yarn workspaces foreach -A -p -t run build",
+    "dev": "yarn workspaces foreach -A -p -t run dev",
+    "test": "yarn workspaces foreach -A -p -t run test",
     "test:changed": "node scripts/run-on-changed.js test",
-    "test:watch": "npm run test:watch --workspaces",
-    "test:coverage": "npm run test:coverage --workspaces",
+    "test:watch": "yarn workspaces foreach -A -p -t run test:watch",
+    "test:coverage": "yarn workspaces foreach -A -p -t run test:coverage",
     "lint:prettier": "prettier --write .",
     "lint:eslint": "eslint --cache . --fix",
-    "lint": "npm run lint:prettier && npm run lint:eslint",
+    "lint": "yarn lint:prettier && yarn lint:eslint",
     "lint-staged": "lint-staged",
-    "typecheck": "npm run typecheck --workspaces",
+    "typecheck": "yarn workspaces foreach -A -p -t run typecheck",
     "typecheck:changed": "node scripts/run-on-changed.js typecheck",
     "prepare": "husky",
-    "clean": "npm run clean --workspaces",
+    "clean": "yarn workspaces foreach -A -p -t run clean",
     "cs:add": "changeset add",
     "cs:version": "changeset version",
-    "cs:publish": "changeset publish"
+    "cs:publish": "changeset publish",
+    "noop": "echo hi",
+    "noop1": "yarn run noop"
   },
   "author": "",
   "license": "ISC",
@@ -60,5 +62,6 @@
     "better-sqlite3": "^12.2.0",
     "ignore": "^7.0.5",
     "ts-node": "^10.9.2"
-  }
+  },
+  "packageManager": "yarn@4.12.0"
 }

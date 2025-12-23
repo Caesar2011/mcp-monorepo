@@ -4,3 +4,5 @@ dist/
 .eslintcache
 tsconfig.tsbuildinfo
 /old-packages/
+
+.yarn

@@ -5,9 +5,7 @@
   "description": "MCP server for calendar tools using ICS/ical feeds",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "bin": {
-    "@mcp-monorepo/ics": "./dist/index.js"
-  },
+  "bin": "./dist/index.js",
   "files": [
     "dist"
   ],
@@ -26,7 +24,7 @@
     "clean": "rimraf dist tsconfig.tsbuildinfo"
   },
   "dependencies": {
-    "@mcp-monorepo/shared": "*",
+    "@mcp-monorepo/shared": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.23.1",
     "date-fns-tz": "^3.2.0",
     "luxon": "^3.7.2",

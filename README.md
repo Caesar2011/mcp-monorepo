@@ -18,46 +18,46 @@ This project is a well-structured monorepo with the following benefits:
 ### Prerequisites
 
 - Node.js 18+
-- npm 7+ (for workspace support)
+- Yarn 1.x+ (Classic)
 
 ### Installation
 
 ```bash
 # Install all dependencies for all packages
-npm install
+yarn install
 ```
 
 ### Building
 
 ```bash
 # Build all packages
-npm run build
+yarn build
 
 # Build a specific package
-npm run build --workspace=@mcp-monorepo/npm
+yarn workspace @mcp-monorepo/npm build
 ```
 
 ### Development
 
 ```bash
 # Start development mode with file watching for all packages
-npm run dev
+yarn dev
 
 # Start a specific package in dev mode
-npm run dev --workspace=@mcp-monorepo/npm
+yarn workspace @mcp-monorepo/npm dev
 ```
 
 ### Testing
 
 ```bash
 # Run all tests
-npm test
+yarn test
 
 # Run tests with coverage
-npm run test:coverage
+yarn test:coverage
 
 # Run tests in watch mode
-npm run test:watch
+yarn test:watch
 ```
 
 ## 📦 Releasing Packages
@@ -75,7 +75,7 @@ Make your code changes in any of the packages as you normally would.
 Before you commit, run the following command to declare your intent to release:
 
 ```bash
-npm run cs:add
+yarn cs:add
 ```
 
 This will launch an interactive CLI that will ask you:
@@ -186,7 +186,7 @@ Robust error handling with:
 
 Contributions are welcome! Please follow these steps:
 
-1. Clone the repository and install dependencies with `npm install`.
+1. Clone the repository and install dependencies with `yarn install`.
 2. Add or modify tools in their respective `packages/*` directories.
 3. Add comprehensive tests for any new functionality.
 4. Follow the established patterns for consistency.

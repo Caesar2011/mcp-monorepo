@@ -1,13 +1,16 @@
 import { registerTool } from '@mcp-monorepo/shared'
+import { Client, type QueryDataSourceParameters } from '@notionhq/client'
 import { z } from 'zod'
+
+import { simplifyNotionPages } from '../lib/parser.js'
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
-export const registerNotionQueryTool = (server: McpServer) =>
+export const registerQueryDatasourceTool = (server: McpServer) =>
   registerTool(server, {
-    name: 'notion-query',
+    name: 'query-datasource',
     title: 'Query a Notion Data Source',
-    description: `Gets a list of pages from a data source, identified by its URL (e.g., "collection://<uuid>"). Supports filtering and sorting. The response is paginated; use 'start_cursor' for subsequent requests if 'next_cursor' is returned. Filters operate on properties and can be simple or compound (using "and"/"or"). Sorts operate on properties or timestamps. For performance, use 'filter_properties' to retrieve only necessary page properties. Refer to Notion API documentation for the exact filter and sort object structures.`,
+    description: `Gets a list of pages from a data source, identified by its URL (e.g., "collection://<uuid>"). Supports filtering and sorting. The response is paginated; use 'start_cursor' for subsequent requests if 'next_cursor' is returned. Filters operate on properties and can be simple or compound (using "and"/"or"). Sorts operate on properties or timestamps. For performance, you can use 'filter_properties' to retrieve only necessary page properties. Refer to Notion API documentation for the exact filter and sort object structures.`,
     inputSchema: {
       data_source_url: z
         .string()
@@ -19,7 +22,13 @@ export const registerNotionQueryTool = (server: McpServer) =>
           'A JSON filter object to apply. Example: {"property": "Done", "checkbox": {"equals": true}} or {"and": [...]}.',
         ),
       sorts: z
-        .array(z.record(z.string(), z.unknown()))
+        .array(
+          z.object({
+            property: z.string().optional(),
+            timestamp: z.string().optional(),
+            direction: z.enum(['ascending', 'descending']),
+          }),
+        )
         .optional()
         .describe('An array of JSON sort objects. Example: [{"property": "Name", "direction": "ascending"}].'),
       start_cursor: z.string().optional().describe('If provided, starts the query at the specified cursor.'),
@@ -30,7 +39,9 @@ export const registerNotionQueryTool = (server: McpServer) =>
         .describe('An array of property IDs or names to return. If not provided, all properties are returned.'),
     },
     outputSchema: {
-      results: z.array(z.any()).describe('An array of page objects matching the query.'),
+      results: z
+        .array(z.record(z.string(), z.any()))
+        .describe('An array of simplified page objects. Each object is a flat key-value map of its properties.'),
       next_cursor: z
         .string()
         .nullable()
@@ -45,47 +56,36 @@ export const registerNotionQueryTool = (server: McpServer) =>
         throw new Error('Invalid data_source_url format. Must start with "collection://".')
       }
 
-      const dataSourceId = data_source_url.substring('collection://'.length)
-
       const NOTION_API_KEY = process.env.NOTION_API_KEY
       if (!NOTION_API_KEY) {
         throw new Error('NOTION_API_KEY environment variable is not set.')
       }
 
-      const apiUrl = new URL(`https://api.notion.com/v1/data_sources/${dataSourceId}/query`)
+      const notion = new Client({ auth: NOTION_API_KEY })
+      const dataSourceId = data_source_url.substring('collection://'.length)
 
-      if (filter_properties && filter_properties.length > 0) {
-        filter_properties.forEach((prop) => {
-          apiUrl.searchParams.append('filter_properties', prop)
+      try {
+        const response = await notion.dataSources.query({
+          data_source_id: dataSourceId,
+          filter: filter as QueryDataSourceParameters['filter'],
+          sorts: sorts as QueryDataSourceParameters['sorts'],
+          start_cursor,
+          page_size,
+          filter_properties,
         })
+
+        return response
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          throw new Error(`Notion API request failed: ${error.message}`)
+        }
+        throw new Error('An unknown Notion API error occurred.')
       }
-
-      const body: Record<string, unknown> = {}
-      if (filter) body.filter = filter
-      if (sorts) body.sorts = sorts
-      if (start_cursor) body.start_cursor = start_cursor
-      if (page_size) body.page_size = page_size
-
-      const response = await fetch(apiUrl.toString(), {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${NOTION_API_KEY}`,
-          'Notion-Version': '2025-09-03',
-          'Content-Type': 'application/json',
-        },
-        body: Object.keys(body).length > 0 ? JSON.stringify(body) : undefined,
-      })
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        throw new Error(`Notion API request failed with status ${response.status}: ${errorText}`)
-      }
-
-      return (await response.json()) as { results: unknown[]; next_cursor: string | null; has_more: boolean }
     },
+    // The formatter is now extremely clean, just calling the new parser.
     formatter(data) {
       return {
-        results: data.results,
+        results: simplifyNotionPages(data.results),
         next_cursor: data.next_cursor,
         has_more: data.has_more,
       }

@@ -2,11 +2,11 @@
 
 import { createMcpServer } from '@mcp-monorepo/shared'
 
-import { registerNotionQueryTool } from './tools/notion-query.js'
+import { registerQueryDatasourceTool } from './tools/query-datasource.js'
 
 createMcpServer({
   name: 'notion-query',
   importMetaPath: import.meta.filename,
   title: 'Notion Query MCP Server',
-  tools: [registerNotionQueryTool],
+  tools: [registerQueryDatasourceTool],
 })

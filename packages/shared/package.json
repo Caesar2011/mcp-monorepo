@@ -1,6 +1,6 @@
 {
   "name": "@mcp-monorepo/shared",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "type": "module",
   "description": "Shared tools for other mcp servers",
   "main": "dist/index.js",

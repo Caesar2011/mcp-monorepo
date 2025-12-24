@@ -1,5 +1,11 @@
 # @mcp-monorepo/notion-query
 
+## 1.3.0
+
+### Minor Changes
+
+- 35ada47: add update-page tool and implement property update parsing; rename create-pages tool
+
 ## 1.2.0
 
 ### Minor Changes

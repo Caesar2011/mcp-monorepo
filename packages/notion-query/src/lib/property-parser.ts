@@ -4,17 +4,14 @@ import { type DataSourceObjectResponse } from '@notionhq/client/build/src/api-en
 
 type DataSourceSchema = DataSourceObjectResponse['properties']
 type NotionProperties = CreatePageParameters['properties']
+type NotionUpdateProperties = UpdatePageParameters['properties']
 
 /**
  * Parses a flat properties object from the 'create-pages' tool input
  * into the format required by the Notion API.
- *
- * It uses the data source schema to correctly format each property
- * according to its type (e.g., number, select, date) [11].
- *
- * @param properties - A flat key-value map of properties from the tool input [1].
- * @param dataSourceSchema - The schema of the parent data source, used to determine property types [6].
- * @returns A Notion `CreatePageParameters['properties']` object ready for the API [9].
+ * @param properties - A flat key-value map of properties from the tool input.
+ * @param dataSourceSchema - The schema of the parent data source.
+ * @returns A Notion `CreatePageParameters['properties']` object.
  */
 export function parsePropertiesForCreate(
   properties: Record<string, string | number | boolean | null>,
@@ -115,15 +112,127 @@ export function parsePropertiesForCreate(
 /**
  * Parses a flat properties object with special keys (e.g., 'date:deadline:start')
  * from the 'update-page' tool input into the format required by the Notion API.
- * @param properties - A flat key-value map with special-cased keys.
- * @returns A Notion `UpdatePageParameters['properties']` object.
+ * @param properties - A flat key-value map with special-cased keys from the tool input [1].
+ * @param schema - The schema of the data source the page belongs to.
+ * @returns A Notion `NotionUpdateProperties` object.
  */
 export function parsePropertiesForUpdate(
-  _properties: Record<string, string | number>,
-): UpdatePageParameters['properties'] {
-  // This function would contain the complex logic to handle formats like:
-  // "date:deadline:start", "place:office:name", "__YES__" for checkboxes etc.
-  // It is a placeholder for now.
-  logger.warn('parsePropertiesForUpdate is a skeleton and not fully implemented.')
-  return {}
+  properties: Record<string, string | number | boolean | null>,
+  schema: DataSourceSchema,
+): NotionUpdateProperties {
+  const notionProperties: NotionUpdateProperties = {}
+  const groupedComplexProps: Record<
+    string,
+    | {
+        type: 'date'
+        data: {
+          start: string
+          end?: string | null
+        }
+      }
+    | {
+        type: 'place'
+        data: {
+          latitude: number
+          longitude: number
+          name?: string
+          address?: string
+          google_place_id?: string
+        }
+      }
+  > = {}
+
+  // 1. Group complex, colon-separated properties like 'date' and 'place' [1].
+  for (const [key, value] of Object.entries(properties)) {
+    const parts = key.split(':')
+    if (parts.length > 1 && (parts[0] === 'date' || parts[0] === 'place')) {
+      const [type, propName, ...rest] = parts
+      const part = rest.join(':') // Join the rest in case property name has a colon
+      if (!groupedComplexProps[propName]) {
+        groupedComplexProps[propName] = { type: type as 'date' | 'place', data: {} as never }
+      }
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      groupedComplexProps[propName].data[part] = value
+    }
+  }
+
+  // 2. Process grouped complex properties
+  for (const [name, { type, data }] of Object.entries(groupedComplexProps)) {
+    if (type === 'date') {
+      const dateObj: { start: string; end?: string | null } = { start: data.start }
+      if (data.end) dateObj.end = data.end
+      // eslint-disable-next-line
+      notionProperties[name] = { date: data.start === null ? null : dateObj }
+    } else if (type === 'place') {
+      // For a place to be valid, latitude and longitude are required [11].
+      if (typeof data.latitude === 'number' && typeof data.longitude === 'number') {
+        const placeObj: { lat: number; lon: number; name?: string; address?: string; google_place_id?: string } = {
+          lat: data.latitude,
+          lon: data.longitude,
+        }
+        if (data.name) placeObj.name = String(data.name)
+        if (data.address) placeObj.address = String(data.address)
+        if (data.google_place_id) placeObj.google_place_id = String(data.google_place_id)
+
+        notionProperties[name] = { place: placeObj }
+      } else {
+        logger.warn(`Skipping place property "${name}" due to missing or invalid latitude/longitude.`)
+      }
+    }
+  }
+
+  // 3. Process simple and standard properties
+  for (const [name, value] of Object.entries(properties)) {
+    if (name.includes(':')) continue // Skip keys already processed in the grouping step.
+
+    const propSchema = schema[name]
+    const propType = propSchema?.type ?? (name.toLowerCase() === 'title' ? 'title' : undefined)
+
+    if (!propType) {
+      logger.warn(`Could not determine type for property "${name}". Skipping update.`)
+      continue
+    }
+
+    /* eslint-disable no-restricted-syntax */
+    switch (propType) {
+      case 'title':
+        notionProperties[name] = { title: [{ text: { content: String(value) } }] }
+        break
+      case 'rich_text':
+        notionProperties[name] = { rich_text: [{ text: { content: String(value ?? '') } }] }
+        break
+      case 'number':
+        notionProperties[name] = { number: value === null ? null : Number(value) }
+        break
+      case 'select':
+        notionProperties[name] = { select: value === null ? null : { name: String(value) } }
+        break
+      case 'status':
+        notionProperties[name] = { status: value === null ? null : { name: String(value) } }
+        break
+      case 'checkbox': {
+        const boolValue = String(value).toLowerCase() === '__yes__' || String(value).toLowerCase() === 'true'
+        notionProperties[name] = { checkbox: boolValue }
+        break
+      }
+      case 'url':
+        notionProperties[name] = { url: value === null ? null : String(value) }
+        break
+      case 'email':
+        notionProperties[name] = { email: value === null ? null : String(value) }
+        break
+      case 'phone_number':
+        notionProperties[name] = { phone_number: value === null ? null : String(value) }
+        break
+      default:
+        if (!Object.keys(groupedComplexProps).includes(name)) {
+          logger.warn(`Updates for property type "${propType}" are not supported. Skipping "${name}".`)
+        }
+        break
+    }
+    /* eslint-enable no-restricted-syntax */
+  }
+
+  return notionProperties
 }

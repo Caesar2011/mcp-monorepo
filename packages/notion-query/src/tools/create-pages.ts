@@ -70,7 +70,7 @@ Examples of creating pages:
 
 export const registerCreatePagesTool = (server: McpServer) =>
   registerTool(server, {
-    name: 'notion-create-pages',
+    name: 'create-pages',
     title: 'Create pages in Markdown',
     description,
     inputSchema: {

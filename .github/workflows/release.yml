@@ -26,6 +26,9 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'yarn'
 
+      - name: Corepack Enable
+        run: corepack enable
+
       - name: Install Dependencies
         run: yarn install --frozen-lockfile
 
@@ -54,6 +57,9 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'yarn'
+
+      - name: Corepack Enable
+        run: corepack enable
 
       - name: Install Dependencies
         run: yarn install --frozen-lockfile

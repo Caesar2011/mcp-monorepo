@@ -81,7 +81,7 @@ export const logger = {
   info: (...message: unknown[]) => _logger.info(parseMessage(...message)),
   debug: (...message: unknown[]) => _logger.debug(parseMessage(...message)),
 
-  warn: (...message: unknown[]) => _logger.warn(parseMessage(...message)),
+  warn: (...message: unknown[]) => _logger.warning(parseMessage(...message)),
   log: (...message: unknown[]) => _logger.debug(parseMessage(...message)),
 
   getLevel: () => _logger.level,

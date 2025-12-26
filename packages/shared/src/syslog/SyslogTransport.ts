@@ -2,6 +2,8 @@ import dgram from 'node:dgram'
 
 import { type LogEntry, transports } from 'winston'
 
+import { logger } from '@mcp-monorepo/shared';
+
 import { createSyslogMessage } from './encoder.js'
 import { type SyslogSeverityString } from './types.js'
 
@@ -31,13 +33,18 @@ export class SyslogTransport extends transports.Console {
 
     // Send log message via UDP
     this.udpClient.send(Buffer.from(message), 0, message.length, this.opts.port, this.opts.host, (err) => {
-      // eslint-disable-next-line
-      if (err) console.error(`Failed to send log: ${err.message}`)
+      if (err) logger.error(`Failed to send log: ${err.message}`)
       callback()
     })
   }
 
   setName(name: string) {
     this.opts.appName = name
+  }
+
+  close(): void {
+    if (this.udpClient) {
+      this.udpClient.close()
+    }
   }
 }

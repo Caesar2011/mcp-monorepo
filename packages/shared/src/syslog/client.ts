@@ -87,4 +87,7 @@ export const logger = {
   getLevel: () => _logger.level,
   setLevel: (_level: string) => {},
   setName: (name: string) => transport.setName(name),
+  close: (): void => {
+    _logger.close()
+  },
 }

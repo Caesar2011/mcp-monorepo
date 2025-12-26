@@ -8,7 +8,7 @@
  *
  * How to Run:
  * 1. From the root of the `packages/notion-query` directory, run:
- *    npx ts-node-esm ./src/demo.ts
+ *    npx ts-node-esm ./src/DEMO.ts
  *
  * What this script does:
  * 1. Cleans up any previous demo database and data directory.
@@ -25,7 +25,7 @@ import { resolve } from 'node:path'
 
 import { logger } from '@mcp-monorepo/shared'
 
-import { LocalRAG } from './local-rag/index.js'
+import { LocalRAG } from './index.js'
 
 // --- Demo File Content ---
 const RAG_INTRO_CONTENT = `LocalRAG is a powerful, private, and configurable local library for Retrieval-Augmented Generation.

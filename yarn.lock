@@ -6829,13 +6829,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"onnxruntime-common@npm:1.22.0":
-  version: 1.22.0
-  resolution: "onnxruntime-common@npm:1.22.0"
-  checksum: 10c0/3e2930e91ac26b9fb4c90583cd47487e7b20739eb9050c57ac22b3eb395defb0d4dbb16a62797aefe4a1152a9b7921092dea1f5e9d4826d76d8232249ab51f7d
-  languageName: node
-  linkType: hard
-
 "onnxruntime-common@npm:1.22.0-dev.20250409-89f8206ba4":
   version: 1.22.0-dev.20250409-89f8206ba4
   resolution: "onnxruntime-common@npm:1.22.0-dev.20250409-89f8206ba4"
@@ -6843,14 +6836,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"onnxruntime-node@npm:1.22.0":
-  version: 1.22.0
-  resolution: "onnxruntime-node@npm:1.22.0"
+"onnxruntime-common@npm:1.23.0":
+  version: 1.23.0
+  resolution: "onnxruntime-common@npm:1.23.0"
+  checksum: 10c0/2c2d90d201d5090aa4c99a19185b43c9a6831e9b11c5ebfde3c57e72ba8c56388e5c528f23100a422233eebc5b228a11530b30af9858a1d54e888199175bdf55
+  languageName: node
+  linkType: hard
+
+"onnxruntime-node@npm:1.23.0":
+  version: 1.23.0
+  resolution: "onnxruntime-node@npm:1.23.0"
   dependencies:
     adm-zip: "npm:^0.5.16"
     global-agent: "npm:^3.0.0"
-    onnxruntime-common: "npm:1.22.0"
-  checksum: 10c0/5997446dbc5f87e1d56515f6772279326f25a504a948f114171daaedd9fb6c94c96fc1321cf1184a4143d08b2d10d96eede9c00e12c6d4af87270638b760e965
+    onnxruntime-common: "npm:1.23.0"
+  checksum: 10c0/dee0427cc302e1e6e927689b5416f75e87ee1e6ae4eec84e22283f34c2cb858bf622e21d5e87ddffc8e4ecc4b2390e2c3b2670696e4481ac8879f88508fecd7d
   conditions: (os=win32 | os=darwin | os=linux)
   languageName: node
   linkType: hard

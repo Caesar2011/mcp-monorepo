@@ -6,12 +6,12 @@ import type { PackageJson } from 'types-package-json'
 export async function findProjectRoot(currentDir: string) {
   let dir = currentDir
   while (true) {
-    const packageJsonPath = path.join(dir, 'package.json')
+    const packageJsonPath = path.resolve(dir, 'package.json')
     try {
       await fs.access(packageJsonPath)
       return dir
     } catch (_) {
-      const parentDir = path.dirname(dir)
+      const parentDir = path.resolve(dir, '../')
       if (parentDir === dir) {
         throw new Error('package.json not found in any parent directory.')
       }

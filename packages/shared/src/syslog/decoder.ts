@@ -5,16 +5,41 @@ import {
   type SyslogSeverityString,
 } from './types.js'
 
-const SyslogSeverityStringsByLevel: { [key: number]: SyslogSeverityString } = {}
-for (const key in SyslogSeverityLevels) {
-  if (Object.prototype.hasOwnProperty.call(SyslogSeverityLevels, key)) {
-    const level = SyslogSeverityLevels[key as SyslogSeverityString]
-    SyslogSeverityStringsByLevel[level] = key as SyslogSeverityString
-  }
-}
+const SYSLOG_TOKENS = {
+  TILDE: '~t~',
+  BACKSLASH: '~b~',
+  QUOTE: '~q~',
+  NEWLINE: '~n~',
+  CARRIAGE_RETURN: '~r~',
+} as const
 
-function unescape(value: string): string {
-  return value.replace(/\\n/g, '\n').replace(/\\r/g, '\r').replace(/\\\\"/g, '"').replace(/\\\\/g, '\\')
+const SyslogSeverityStringsByLevel: { [key: number]: SyslogSeverityString } = Object.entries(
+  SyslogSeverityLevels,
+).reduce(
+  (acc, [key, value]) => {
+    acc[value] = key as SyslogSeverityString
+    return acc
+  },
+  {} as { [key: number]: SyslogSeverityString },
+)
+
+/**
+ * Unescapes special characters from a syslog field back to their original form.
+ * The order of replacement is the reverse of the encoding process.
+ *
+ * @param value The escaped string.
+ * @returns The original, unescaped string.
+ */
+function unescapeSyslogField(value: string | undefined): string {
+  if (value === undefined) {
+    return ''
+  }
+  return String(value)
+    .replace(new RegExp(SYSLOG_TOKENS.CARRIAGE_RETURN, 'g'), '\r')
+    .replace(new RegExp(SYSLOG_TOKENS.NEWLINE, 'g'), '\n')
+    .replace(new RegExp(SYSLOG_TOKENS.QUOTE, 'g'), '"')
+    .replace(new RegExp(SYSLOG_TOKENS.BACKSLASH, 'g'), '\\')
+    .replace(new RegExp(SYSLOG_TOKENS.TILDE, 'g'), '~')
 }
 
 /**
@@ -22,19 +47,19 @@ function unescape(value: string): string {
  *
  * @param syslogString The syslog message string to decode.
  * @returns A SyslogMessage object.
- * @throws Error if the syslog string format is invalid.
+ * @throws An Error if the syslog string format is invalid.
  */
 export function decodeSyslogMessage(syslogString: string): SyslogMessage {
-  if (!syslogString || syslogString.length === 0) {
+  if (!syslogString) {
     throw new Error('Input syslog string cannot be empty.')
   }
 
-  const headerRegex = /^<(\d+)>(\d+) (\S+) (\S+) (\S+) (\S+) (\S+) (.*)$/
+  const headerRegex = /^<(\d+)>(\d+) (\S+) (\S+) (\S+) (\S+) (\S+) (.*)$/s
   const match = syslogString.match(headerRegex)
 
   if (!match) {
     throw new Error(
-      'Invalid syslog message format: Could not parse header. Ensure it matches <PRI>VERSION TIMESTAMP HOSTNAME APP-NAME PROCID MSGID ...',
+      'Invalid syslog message format: Could not parse header. Expected: <PRI>VERSION TIMESTAMP HOSTNAME APP-NAME PROCID MSGID ...',
     )
   }
 
@@ -45,56 +70,56 @@ export function decodeSyslogMessage(syslogString: string): SyslogMessage {
   const severity = SyslogSeverityStringsByLevel[severityLevel]
 
   if (severity === undefined) {
-    throw new Error(
-      `Invalid syslog message: Unknown severity level ${severityLevel} derived from priority ${priority}.`,
-    )
+    throw new Error(`Invalid syslog message: Unknown severity level ${severityLevel} from priority ${priority}.`)
   }
 
   let sdId: string | undefined
   let sdParams: StructuredDataParams | undefined
   let message: string
+  let structuredDataPart: string
 
-  if (rest.startsWith('[') && rest.includes(']')) {
-    const sdEndIndex = rest.indexOf(']')
+  if (rest.startsWith('[')) {
+    const sdEndIndex = rest.indexOf('] ')
     if (sdEndIndex === -1) {
-      throw new Error('Invalid syslog message: Malformed structured data - missing closing bracket.')
+      if (rest.endsWith(']')) {
+        structuredDataPart = rest
+        message = ''
+      } else {
+        throw new Error(
+          'Invalid syslog message: Malformed structured data - missing closing bracket or subsequent space.',
+        )
+      }
+    } else {
+      structuredDataPart = rest.substring(0, sdEndIndex + 1)
+      message = rest.substring(sdEndIndex + 2)
     }
 
-    const structuredDataPart = rest.substring(0, sdEndIndex + 1)
-    message = rest.substring(sdEndIndex + 2)
-
-    const sdContentMatch = structuredDataPart.match(/^\[([^ ]+)(.*)]$/)
+    const sdContentMatch = structuredDataPart.match(/^\[([^ ]+)(.*)]$/s)
     if (!sdContentMatch) {
-      throw new Error('Invalid syslog message: Malformed structured data content inside brackets.')
+      throw new Error('Invalid syslog message: Malformed structured data content.')
     }
-    sdId = sdContentMatch[1] // The SD-ID (e.g., "event@12345")
-    const paramsString = sdContentMatch[2].trim() // The parameters string (e.g., "param1="value1"")
+    sdId = sdContentMatch[1]
+    const paramsString = sdContentMatch[2].trim()
 
     if (paramsString) {
       sdParams = {}
-      const paramRegex = /(\S+)="((?:[^"\\]|\\.)*?)"/g
-      let paramMatch
-      // eslint-disable-next-line no-restricted-syntax
-      while ((paramMatch = paramRegex.exec(paramsString)) !== null) {
+      const paramRegex = /(\S+)="([^"]*)"/g
+      let paramMatch: RegExpExecArray | null
+      while ((paramMatch = paramRegex.exec(paramsString))) {
         const key = paramMatch[1]
-        // Unescape backslashes first, then double quotes
-        sdParams[key] = unescape(paramMatch[2])
+        sdParams[key] = unescapeSyslogField(paramMatch[2])
       }
     }
+  } else if (rest === '-') {
+    message = ''
+  } else if (rest.startsWith('- ')) {
+    message = rest.substring(2)
   } else {
-    if (rest.startsWith('- ')) {
-      message = rest.substring(2)
-    } else if (rest === '-') {
-      message = ''
-    } else {
-      // eslint-disable-next-line
-      console.warn(`Unexpected syslog format: Structured data not found or malformed. Treating "${rest}" as message.`)
-      message = rest
-    }
+    message = rest
   }
 
   return {
-    message: unescape(message),
+    message: unescapeSyslogField(message),
     severity: severity,
     hostname: hostname === '-' ? undefined : hostname,
     appName: appName === '-' ? undefined : appName,

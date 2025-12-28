@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { readdir, stat } from 'node:fs/promises'
 import { basename, extname, join, resolve } from 'node:path'
 
-import { logger } from '@mcp-monorepo/shared'
+import { ThrottledExecutor, logger } from '@mcp-monorepo/shared'
 
 import { DocumentChunker } from './chunker.js'
 import { Embedder } from './embedder.js'
@@ -41,12 +41,15 @@ export class LocalRAG {
   private readonly embedder: Embedder
   private readonly vectorStore: VectorStore
   private readonly watcher: DirectoryWatcher
+  private readonly writeExecutor: ThrottledExecutor
 
   private cleanupIntervalId?: NodeJS.Timeout
   private optimizeIntervalId?: NodeJS.Timeout
 
   private constructor(config: Required<LocalRAGConfig>, embedder: Embedder, vectorStore: VectorStore) {
     this.config = config
+    this.writeExecutor = new ThrottledExecutor(0)
+
     // Initialize components
     this.parser = new DocumentParser({
       baseDir: this.config.baseDir,
@@ -119,54 +122,57 @@ export class LocalRAG {
 
     await this.watcher.close()
     await this.embedder.destroy()
+    await this.writeExecutor.onIdle()
     this.vectorStore.close()
     logger.info('LocalRAG shutdown complete.')
   }
 
-  public async ingestFile(input: IngestFileInput): Promise<void> {
-    // Callers are responsible for handling errors, including those from unsupported file types.
-    // The watcher listener has special handling to ignore unsupported files.
-    const { filePath, tags, project, watch } = input
-    const absolutePath = resolve(filePath)
+  public ingestFile(input: IngestFileInput): Promise<void> {
+    return this.writeExecutor.execute(async () => {
+      // Callers are responsible for handling errors, including those from unsupported file types.
+      // The watcher listener has special handling to ignore unsupported files.
+      const { filePath, tags, project, watch } = input
+      const absolutePath = resolve(filePath)
 
-    const stats = await this.parser.validateAndGetFileStats(absolutePath)
-    const currentMtime = stats.fileModifiedAt
+      const stats = await this.parser.validateAndGetFileStats(absolutePath)
+      const currentMtime = stats.fileModifiedAt
 
-    const existingMetadata = await this.vectorStore.getLatestMetadata(absolutePath)
+      const existingMetadata = await this.vectorStore.getLatestMetadata(absolutePath)
 
-    if (existingMetadata?.fileModifiedAt === currentMtime) {
-      logger.info(`Skipping ingestion for unchanged file: ${absolutePath}`)
-    } else {
-      logger.info(`Ingesting changed or new file: ${absolutePath}`)
-      const { text, language, fileSize, metadata: fileMetadata } = await this.parser.parseFile(absolutePath)
+      if (existingMetadata?.fileModifiedAt === currentMtime) {
+        logger.info(`Skipping ingestion for unchanged file: ${absolutePath}`)
+      } else {
+        logger.info(`Ingesting changed or new file: ${absolutePath}`)
+        const { text, language, fileSize, metadata: fileMetadata } = await this.parser.parseFile(absolutePath)
 
-      const metadata: Partial<DocumentMetadata> = {
-        ...fileMetadata,
-        fileName: basename(absolutePath),
-        fileSize,
-        fileType: extname(absolutePath).slice(1),
-        language,
-        tags: tags ?? [],
-        project,
-        memoryType: 'file',
-      }
+        const metadata: Partial<DocumentMetadata> = {
+          ...fileMetadata,
+          fileName: basename(absolutePath),
+          fileSize,
+          fileType: extname(absolutePath).slice(1),
+          language,
+          tags: tags ?? [],
+          project,
+          memoryType: 'file',
+        }
 
-      const vectorChunks = await this._createVectorChunks(text, metadata, absolutePath)
+        const vectorChunks = await this._createVectorChunks(text, metadata, absolutePath)
 
-      if (vectorChunks.length === 0) {
-        logger.warn(
-          `Skipping ingestion for ${absolutePath} as it produced no valid chunks (file might be empty or too short).`,
-        )
+        if (vectorChunks.length === 0) {
+          logger.warn(
+            `Skipping ingestion for ${absolutePath} as it produced no valid chunks (file might be empty or too short).`,
+          )
+          await this.vectorStore.deleteChunks(absolutePath)
+          return
+        }
         await this.vectorStore.deleteChunks(absolutePath)
-        return
+        await this.vectorStore.insertChunks(vectorChunks)
       }
-      await this.vectorStore.deleteChunks(absolutePath)
-      await this.vectorStore.insertChunks(vectorChunks)
-    }
 
-    if (watch && !this.watcher.isWatching(absolutePath)) {
-      await this.watch(absolutePath)
-    }
+      if (watch && !this.watcher.isWatching(absolutePath)) {
+        await this.watch(absolutePath)
+      }
+    })
   }
 
   public async ingestFolder(input: IngestFolderInput): Promise<void> {
@@ -192,58 +198,62 @@ export class LocalRAG {
   /**
    * Ingests a raw text snippet into the vector store.
    */
-  public async ingestText(input: IngestTextInupt): Promise<void> {
-    const { text, label, language, tags, project, ttl } = input
-    if (!label.match(/^[\w.-]+$/)) {
-      throw new ValidationError('Label must contain only alphanumeric characters, hyphens, underscores, and dots.')
-    }
+  public ingestText(input: IngestTextInupt): Promise<void> {
+    return this.writeExecutor.execute(async () => {
+      const { text, label, language, tags, project, ttl } = input
+      if (!label.match(/^[\w.-]+$/)) {
+        throw new ValidationError('Label must contain only alphanumeric characters, hyphens, underscores, and dots.')
+      }
 
-    const syntheticPath = `memory://${label}`
+      const syntheticPath = `memory://${label}`
 
-    const metadata: Partial<DocumentMetadata> = {
-      fileName: label,
-      fileSize: text.length,
-      fileType: 'text-snippet',
-      language,
-      tags: tags ?? [],
-      project,
-      memoryType: 'text',
-      expiresAt: ttl ? this.calculateExpiresAt(ttl) : undefined,
-    }
+      const metadata: Partial<DocumentMetadata> = {
+        fileName: label,
+        fileSize: text.length,
+        fileType: 'text-snippet',
+        language,
+        tags: tags ?? [],
+        project,
+        memoryType: 'text',
+        expiresAt: ttl ? this.calculateExpiresAt(ttl) : undefined,
+      }
 
-    const vectorChunks = await this._createVectorChunks(text, metadata, syntheticPath)
-    await this.vectorStore.deleteChunks(syntheticPath)
-    await this.vectorStore.insertChunks(vectorChunks)
+      const vectorChunks = await this._createVectorChunks(text, metadata, syntheticPath)
+      await this.vectorStore.deleteChunks(syntheticPath)
+      await this.vectorStore.insertChunks(vectorChunks)
+    })
   }
 
   /**
    * Ingests content from a URL.
    */
-  public async ingestUrl(input: IngestUrlInput): Promise<void> {
-    const { url, tags, project, ttl } = input
-    const label = basename(new URL(url).pathname) || `web-${Date.now()}`
+  public ingestUrl(input: IngestUrlInput): Promise<void> {
+    return this.writeExecutor.execute(async () => {
+      const { url, tags, project, ttl } = input
+      const label = basename(new URL(url).pathname) || `web-${Date.now()}`
 
-    const response = await fetch(url)
-    if (!response.ok) throw new Error(`Failed to fetch URL: ${response.statusText}`)
-    const htmlContent = await response.text()
-    const text = await parseHtmlContent(url, htmlContent)
+      const response = await fetch(url)
+      if (!response.ok) throw new Error(`Failed to fetch URL: ${response.statusText}`)
+      const htmlContent = await response.text()
+      const text = await parseHtmlContent(url, htmlContent)
 
-    const syntheticPath = `url://${label}`
+      const syntheticPath = `url://${label}`
 
-    const metadata: Partial<DocumentMetadata> = {
-      fileName: label,
-      fileSize: text.length,
-      fileType: 'web-page',
-      tags: tags ?? [],
-      project,
-      memoryType: 'url',
-      expiresAt: ttl ? this.calculateExpiresAt(ttl) : undefined,
-      sourceUrl: url,
-    }
+      const metadata: Partial<DocumentMetadata> = {
+        fileName: label,
+        fileSize: text.length,
+        fileType: 'web-page',
+        tags: tags ?? [],
+        project,
+        memoryType: 'url',
+        expiresAt: ttl ? this.calculateExpiresAt(ttl) : undefined,
+        sourceUrl: url,
+      }
 
-    const vectorChunks = await this._createVectorChunks(text, metadata, syntheticPath)
-    await this.vectorStore.deleteChunks(syntheticPath)
-    await this.vectorStore.insertChunks(vectorChunks)
+      const vectorChunks = await this._createVectorChunks(text, metadata, syntheticPath)
+      await this.vectorStore.deleteChunks(syntheticPath)
+      await this.vectorStore.insertChunks(vectorChunks)
+    })
   }
 
   /**
@@ -258,47 +268,51 @@ export class LocalRAG {
   /**
    * Updates an existing text snippet (memory).
    */
-  public async updateMemory(input: UpdateMemoryInput): Promise<void> {
-    const { label, mode = 'replace', text: newText, tags, addTags, removeTags } = input
-    const syntheticPath = `memory://${label}`
+  public updateMemory(input: UpdateMemoryInput): Promise<void> {
+    return this.writeExecutor.execute(async () => {
+      const { label, mode = 'replace', text: newText, tags, addTags, removeTags } = input
+      const syntheticPath = `memory://${label}`
 
-    const existingChunks = await this.vectorStore.getChunksByPath(syntheticPath)
-    if (existingChunks.length === 0) throw new Error(`Memory with label "${label}" not found.`)
+      const existingChunks = await this.vectorStore.getChunksByPath(syntheticPath)
+      if (existingChunks.length === 0) throw new Error(`Memory with label "${label}" not found.`)
 
-    const oldMetadata = existingChunks[0].metadata
-    let fullText = existingChunks
-      .sort((a, b) => a.chunkIndex - b.chunkIndex)
-      .map((c) => c.text)
-      .join('')
+      const oldMetadata = existingChunks[0].metadata
+      let fullText = existingChunks
+        .sort((a, b) => a.chunkIndex - b.chunkIndex)
+        .map((c) => c.text)
+        .join('')
 
-    if (newText) {
-      if (mode === 'append') fullText += newText
-      else if (mode === 'prepend') fullText = newText + fullText
-      else fullText = newText
-    }
+      if (newText) {
+        if (mode === 'append') fullText += newText
+        else if (mode === 'prepend') fullText = newText + fullText
+        else fullText = newText
+      }
 
-    let newTags = oldMetadata?.tags ?? []
-    if (tags) newTags = tags // Replace
-    if (addTags) newTags = [...new Set([...newTags, ...addTags])]
-    if (removeTags) newTags = newTags.filter((t) => !removeTags.includes(t))
+      let newTags = oldMetadata?.tags ?? []
+      if (tags) newTags = tags // Replace
+      if (addTags) newTags = [...new Set([...newTags, ...addTags])]
+      if (removeTags) newTags = newTags.filter((t) => !removeTags.includes(t))
 
-    const updatedMetadata: Partial<DocumentMetadata> = {
-      ...oldMetadata,
-      tags: newTags,
-      fileSize: fullText.length,
-    }
+      const updatedMetadata: Partial<DocumentMetadata> = {
+        ...oldMetadata,
+        tags: newTags,
+        fileSize: fullText.length,
+      }
 
-    const vectorChunks = await this._createVectorChunks(fullText, updatedMetadata, syntheticPath)
-    await this.vectorStore.deleteChunks(syntheticPath)
-    await this.vectorStore.insertChunks(vectorChunks)
+      const vectorChunks = await this._createVectorChunks(fullText, updatedMetadata, syntheticPath)
+      await this.vectorStore.deleteChunks(syntheticPath)
+      await this.vectorStore.insertChunks(vectorChunks)
+    })
   }
 
   /**
    * Deletes a file or snippet from the vector store.
    */
-  public async delete(path: string): Promise<void> {
-    // Path can be an absolute file path or a synthetic path like `memory://label`
-    await this.vectorStore.deleteChunks(path)
+  public delete(path: string): Promise<void> {
+    return this.writeExecutor.execute(async () => {
+      // Path can be an absolute file path or a synthetic path like `memory://label`
+      await this.vectorStore.deleteChunks(path)
+    })
   }
 
   /**
@@ -318,28 +332,32 @@ export class LocalRAG {
   /**
    * Manually triggers a cleanup of all expired text snippets from the database.
    */
-  public async cleanupExpired(): Promise<number> {
-    return this.vectorStore.cleanupExpired()
+  public cleanupExpired(): Promise<number> {
+    return this.writeExecutor.execute(() => this.vectorStore.cleanupExpired())
   }
 
-  public async watch(path: string, options: WatchOptions = {}): Promise<void> {
-    const absolutePath = resolve(path)
-    if (this.watcher.isWatching(absolutePath)) return
+  public watch(path: string, options: WatchOptions = {}): Promise<void> {
+    return this.writeExecutor.execute(async () => {
+      const absolutePath = resolve(path)
+      if (this.watcher.isWatching(absolutePath)) return
 
-    const stats = await stat(absolutePath)
-    const type = stats.isDirectory() ? 'folder' : 'file'
-    const recursive = type === 'folder' ? (options.recursive ?? false) : false
+      const stats = await stat(absolutePath)
+      const type = stats.isDirectory() ? 'folder' : 'file'
+      const recursive = type === 'folder' ? (options.recursive ?? false) : false
 
-    await this.vectorStore.addWatchedPath(absolutePath, type, recursive)
-    this.watcher.watch(absolutePath)
-    logger.info(`Now watching path: ${absolutePath}`)
+      await this.vectorStore.addWatchedPath(absolutePath, type, recursive)
+      this.watcher.watch(absolutePath)
+      logger.info(`Now watching path: ${absolutePath}`)
+    })
   }
 
-  public async unwatch(path: string): Promise<void> {
-    const absolutePath = resolve(path)
-    await this.vectorStore.removeWatchedPath(absolutePath)
-    this.watcher.unwatch(absolutePath)
-    logger.info(`Stopped watching path: ${absolutePath}`)
+  public unwatch(path: string): Promise<void> {
+    return this.writeExecutor.execute(async () => {
+      const absolutePath = resolve(path)
+      await this.vectorStore.removeWatchedPath(absolutePath)
+      this.watcher.unwatch(absolutePath)
+      logger.info(`Stopped watching path: ${absolutePath}`)
+    })
   }
 
   // ============================================

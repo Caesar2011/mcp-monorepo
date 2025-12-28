@@ -1300,7 +1300,6 @@ __metadata:
     rimraf: "npm:^6.0.1"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
-    why-is-node-running: "npm:^3.2.2"
     zod: "npm:^3.25.76"
   bin:
     notion-query: ./dist/index.js
@@ -9499,15 +9498,6 @@ __metadata:
   bin:
     why-is-node-running: cli.js
   checksum: 10c0/1cde0b01b827d2cf4cb11db962f3958b9175d5d9e7ac7361d1a7b0e2dc6069a263e69118bd974c4f6d0a890ef4eedfe34cf3d5167ec14203dbc9a18620537054
-  languageName: node
-  linkType: hard
-
-"why-is-node-running@npm:^3.2.2":
-  version: 3.2.2
-  resolution: "why-is-node-running@npm:3.2.2"
-  bin:
-    why-is-node-running: cli.js
-  checksum: 10c0/47307bfc2f48dd5228a92103dc43a7cadafbc6b6791c114fd27e03ac271a5082849a54f7e5f5cb261ea68f0d4ad40d9cb503b55812a6b62e67de0c57039fb95b
   languageName: node
   linkType: hard
 

@@ -30,7 +30,13 @@ jobs:
           cache: 'yarn'
 
       - name: Install Dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
+        id: install_deps
+      - name: Display Build Log on Failure
+        if: failure() && steps.install_deps.outcome == 'failure'
+        run: |
+          echo "Installation failed. Displaying build log:"
+          cat /tmp/xfs-*/build.log
 
       - name: Build Project
         run: yarn build
@@ -62,7 +68,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install Dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install --immutable
 
       - name: Build Project
         run: yarn build

@@ -1,5 +1,13 @@
 # @mcp-monorepo/shared
 
+## 1.1.0
+
+### Minor Changes
+
+- 7929a55: add close methods to syslog client and transport to close UDP socket and prevent resource leaks
+- 5358942: add ThrottledExecutor for rate-limited sequential tasks and harden syslog encode/decode with tokenized escaping; fix project root resolution and simplify transport error logging
+- 41b64e4: add close methods to syslog client and transport to close UDP socket and prevent resource leaks
+
 ## 1.0.2
 
 ### Patch Changes

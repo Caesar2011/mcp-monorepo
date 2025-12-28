@@ -1,5 +1,14 @@
 # @mcp-monorepo/mail
 
+## 1.1.3
+
+### Patch Changes
+
+- Updated dependencies [7929a55]
+- Updated dependencies [5358942]
+- Updated dependencies [41b64e4]
+  - @mcp-monorepo/shared@1.1.0
+
 ## 1.1.2
 
 ### Patch Changes

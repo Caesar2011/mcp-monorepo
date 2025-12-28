@@ -30,13 +30,7 @@ jobs:
           cache: 'yarn'
 
       - name: Install Dependencies
-        run: yarn install
-        #id: install_deps
-      - name: Display Build Log on Failure
-        #if: failure() && steps.install_deps.outcome == 'failure'
-        run: |
-          echo "XXXXXX"
-          cat ./yarn.lock
+        run: yarn install --immutable
 
       - name: Build Project
         run: yarn build

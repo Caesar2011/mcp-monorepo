@@ -34,6 +34,8 @@ jobs:
 
       - name: Install Dependencies
         run: yarn install
+        env:
+          YARN_ENABLE_HARDENED_MODE: 0
         #id: install_deps
       - name: Display Build Log on Failure
         #if: failure() && steps.install_deps.outcome == 'failure'

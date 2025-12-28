@@ -1,5 +1,24 @@
 # @mcp-monorepo/notion-query
 
+## 1.3.0
+
+### Minor Changes
+
+- 35ada47: add update-page tool and implement property update parsing; rename create-pages tool
+- 926640a: introduce local RAG module with LanceDB vector store, worker-based HF embeddings, file/folder/url ingestion, hybrid search, directory watcher, and demo script
+- 9b62729: add Notion syncer and semantic search, integrate LocalRAG and trigger immediate sync in tools
+
+### Patch Changes
+
+- 67961fe: enforce immutable yarn install in release workflow, keep yarn.lock, remove why-is-node-running dev dependency
+- a66e4e2: move demo to local-rag/DEMO.ts and update import path and run instructions
+- fd2f271: serialize write operations via ThrottledExecutor to prevent concurrent vector store mutations and await idle on shutdown
+- 67961fe: enforce immutable yarn install in release workflow, keep yarn.lock, remove why-is-node-running dev dependency
+- Updated dependencies [7929a55]
+- Updated dependencies [5358942]
+- Updated dependencies [41b64e4]
+  - @mcp-monorepo/shared@1.1.0
+
 ## 1.2.0
 
 ### Minor Changes

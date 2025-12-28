@@ -20,6 +20,9 @@ export function getDocumentsSchema(): arrow.Schema {
     new arrow.Field('createdAt', new arrow.Utf8(), false),
     new arrow.Field('updatedAt', new arrow.Utf8(), false),
     new arrow.Field('sourceUrl', new arrow.Utf8(), true),
+    new arrow.Field('author', new arrow.Utf8(), true),
+    new arrow.Field('fileCreatedAt', new arrow.Utf8(), true),
+    new arrow.Field('fileModifiedAt', new arrow.Utf8(), true),
   ]
 
   return new arrow.Schema([

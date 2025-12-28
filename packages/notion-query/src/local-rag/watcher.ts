@@ -1,4 +1,4 @@
-import { extname } from 'node:path'
+import { basename, dirname, extname } from 'node:path'
 
 import { logger } from '@mcp-monorepo/shared'
 import { FSWatcher } from 'chokidar'
@@ -18,7 +18,8 @@ type WatcherEvents = {
 /**
  * A robust file system watcher that abstracts away the complexities of chokidar.
  * It debounces change events and only reports on supported file types, emitting clean,
- * actionable events.
+ * actionable events. It handles both initial discovery of existing files and
+ * subsequent changes.
  */
 export class DirectoryWatcher extends TypedEventEmitter<WatcherEvents> {
   private readonly watcher: FSWatcher
@@ -32,13 +33,9 @@ export class DirectoryWatcher extends TypedEventEmitter<WatcherEvents> {
     this.supportedExtensions = new Set(supportedExtensions)
 
     this.watcher = new FSWatcher({
-      ignored: /(^|[/\\])\../, // ignore dotfiles
+      ignored: /(^|[/\\])\../, // ignore dotfiles and dot folders
       persistent: true,
-      ignoreInitial: true, // Don't fire 'add' events on initial scan
-      awaitWriteFinish: {
-        stabilityThreshold: 2000,
-        pollInterval: 100,
-      },
+      awaitWriteFinish: true,
     })
 
     this.setupListeners()
@@ -86,10 +83,27 @@ export class DirectoryWatcher extends TypedEventEmitter<WatcherEvents> {
   }
 
   /**
+   * Checks if a given path is already being watched by chokidar.
+   * @param path The absolute path to check.
+   * @returns True if the path is being watched, false otherwise.
+   */
+  public isWatching(path: string): boolean {
+    const watched = this.watcher.getWatched()
+    // getWatched() returns an object like: { '/path/to/dir': ['file1.txt', 'file2.txt'], '/path/to/other/file.md': [] }
+    const dir = dirname(path)
+    const base = basename(path)
+    return !!watched[path] || watched[dir]?.includes(base)
+  }
+
+  /**
    * Starts watching a given path (file or directory).
    * @param path - The path to watch.
    */
   public watch(path: string): void {
+    if (this.isWatching(path)) {
+      logger.debug(`Watcher: Already watching ${path}`)
+      return
+    }
     this.watcher.add(path)
   }
 

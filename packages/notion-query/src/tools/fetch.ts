@@ -18,11 +18,13 @@ import { getNotionClient } from '../lib/client.js'
 import { normalizeId } from '../lib/id-utils.js'
 import { formatDatabaseToMarkdown, formatPageToMarkdown } from '../lib/response-formatter.js'
 
+import type { NotionSyncer } from '../lib/notion-syncer.js'
+
 type FetchedData =
   | { type: 'page'; page: GetPageResponse; blocks: ListBlockChildrenResponse }
   | { type: 'database'; database: GetDatabaseResponse; data_sources: GetDataSourceResponse[] }
 
-export const registerFetchTool = (server: McpServer) =>
+export const registerFetchTool = (server: McpServer, notionSyncer: NotionSyncer) =>
   registerTool(server, {
     name: 'fetch',
     title: 'Fetch Notion entities',
@@ -99,6 +101,7 @@ https://notion.so/page-url?"
     },
     async formatter(data) {
       if (data.type === 'page') {
+        await notionSyncer.triggerImmediateSync(data.page.id)
         return {
           markdown: await formatPageToMarkdown(
             data.page as PageObjectResponse,

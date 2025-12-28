@@ -2,7 +2,7 @@
 
 import { randomUUID } from 'node:crypto'
 import { readdir, stat } from 'node:fs/promises'
-import { resolve, basename, extname, join } from 'node:path'
+import { basename, extname, join, resolve } from 'node:path'
 
 import { logger } from '@mcp-monorepo/shared'
 
@@ -124,26 +124,47 @@ export class LocalRAG {
   }
 
   public async ingestFile(input: IngestFileInput): Promise<void> {
+    // Callers are responsible for handling errors, including those from unsupported file types.
+    // The watcher listener has special handling to ignore unsupported files.
     const { filePath, tags, project, watch } = input
     const absolutePath = resolve(filePath)
 
-    const { text, language, fileSize } = await this.parser.parseFile(absolutePath)
+    const stats = await this.parser.validateAndGetFileStats(absolutePath)
+    const currentMtime = stats.fileModifiedAt
 
-    const metadata: Partial<DocumentMetadata> = {
-      fileName: basename(absolutePath),
-      fileSize,
-      fileType: extname(absolutePath).slice(1),
-      language,
-      tags: tags ?? [],
-      project,
-      memoryType: 'file',
+    const existingMetadata = await this.vectorStore.getLatestMetadata(absolutePath)
+
+    if (existingMetadata?.fileModifiedAt === currentMtime) {
+      logger.info(`Skipping ingestion for unchanged file: ${absolutePath}`)
+    } else {
+      logger.info(`Ingesting changed or new file: ${absolutePath}`)
+      const { text, language, fileSize, metadata: fileMetadata } = await this.parser.parseFile(absolutePath)
+
+      const metadata: Partial<DocumentMetadata> = {
+        ...fileMetadata,
+        fileName: basename(absolutePath),
+        fileSize,
+        fileType: extname(absolutePath).slice(1),
+        language,
+        tags: tags ?? [],
+        project,
+        memoryType: 'file',
+      }
+
+      const vectorChunks = await this._createVectorChunks(text, metadata, absolutePath)
+
+      if (vectorChunks.length === 0) {
+        logger.warn(
+          `Skipping ingestion for ${absolutePath} as it produced no valid chunks (file might be empty or too short).`,
+        )
+        await this.vectorStore.deleteChunks(absolutePath)
+        return
+      }
+      await this.vectorStore.deleteChunks(absolutePath)
+      await this.vectorStore.insertChunks(vectorChunks)
     }
 
-    const vectorChunks = await this._createVectorChunks(text, metadata, absolutePath)
-    await this.vectorStore.deleteChunks(absolutePath)
-    await this.vectorStore.insertChunks(vectorChunks)
-
-    if (watch) {
+    if (watch && !this.watcher.isWatching(absolutePath)) {
       await this.watch(absolutePath)
     }
   }
@@ -152,14 +173,19 @@ export class LocalRAG {
     const { folderPath, watch, recursive = false, project, tags } = input
     const absolutePath = resolve(folderPath)
 
-    const filesToIndex = await this.findSupportedFiles(absolutePath, recursive)
-    logger.info(`Found ${filesToIndex.length} supported files in ${absolutePath}. Starting initial ingestion...`)
-
-    // Consider adding concurrency control here for very large folders
-    await Promise.all(filesToIndex.map((filePath) => this.ingestFile({ filePath, project, tags })))
-
     if (watch) {
+      // If watching, we just attach the watcher. Chokidar with `ignoreInitial: false`
+      // will emit 'add' events for all existing files, which our listeners will handle.
+      logger.info(
+        `Attaching watcher to ${absolutePath}. It will process existing and new files (recursive: ${recursive}).`,
+      )
       await this.watch(absolutePath, { recursive })
+    } else {
+      // If not watching, perform a one-time manual scan and ingestion.
+      logger.info(`Performing one-time ingestion for ${absolutePath} (recursive: ${recursive}).`)
+      const filesToIndex = await this.findSupportedFiles(absolutePath, recursive)
+      logger.info(`Found ${filesToIndex.length} supported files to ingest.`)
+      await Promise.all(filesToIndex.map((filePath) => this.ingestFile({ filePath, project, tags, watch: false })))
     }
   }
 
@@ -298,6 +324,8 @@ export class LocalRAG {
 
   public async watch(path: string, options: WatchOptions = {}): Promise<void> {
     const absolutePath = resolve(path)
+    if (this.watcher.isWatching(absolutePath)) return
+
     const stats = await stat(absolutePath)
     const type = stats.isDirectory() ? 'folder' : 'file'
     const recursive = type === 'folder' ? (options.recursive ?? false) : false
@@ -363,9 +391,24 @@ export class LocalRAG {
   }
 
   private setupWatcherListeners(): void {
-    this.watcher.on('file-added', (filePath) => this.ingestFile({ filePath }).catch((e) => logger.error(e)))
-    this.watcher.on('file-changed', (filePath) => this.ingestFile({ filePath }).catch((e) => logger.error(e)))
-    this.watcher.on('file-deleted', (filePath) => this.delete(filePath).catch((e) => logger.error(e)))
+    const handleIngest = async (filePath: string) => {
+      try {
+        await this.ingestFile({ filePath })
+      } catch (error) {
+        if (error instanceof ValidationError && error.message.includes('Unsupported file format')) {
+          // This is expected when the watcher picks up an unsupported file. Ignore it.
+          logger.debug(`Watcher ignored unsupported file: ${filePath}`)
+        } else {
+          // Log any other unexpected errors during ingestion.
+          logger.error(`Watcher failed to process file ${filePath}.`, error)
+        }
+      }
+    }
+    this.watcher.on('file-added', handleIngest)
+    this.watcher.on('file-changed', handleIngest)
+    this.watcher.on('file-deleted', (filePath) =>
+      this.delete(filePath).catch((e) => logger.error(e, `Watcher failed to delete file: ${filePath}`)),
+    )
   }
 
   private calculateExpiresAt(ttl: string): string {

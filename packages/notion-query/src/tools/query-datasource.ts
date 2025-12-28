@@ -5,9 +5,10 @@ import { z } from 'zod'
 import { getNotionClient } from '../lib/client.js'
 import { simplifyNotionPages } from '../lib/parser.js'
 
+import type { NotionSyncer } from '../lib/notion-syncer.js'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
-export const registerQueryDatasourceTool = (server: McpServer) =>
+export const registerQueryDatasourceTool = (server: McpServer, notionSyncer: NotionSyncer) =>
   registerTool(server, {
     name: 'query-datasource',
     title: 'Query a Notion Data Source',
@@ -76,8 +77,10 @@ export const registerQueryDatasourceTool = (server: McpServer) =>
         throw new Error('An unknown Notion API error occurred.')
       }
     },
-    // The formatter is now extremely clean, just calling the new parser.
-    formatter(data) {
+    async formatter(data) {
+      await Promise.allSettled(
+        data.results.map((pageOrDatasource) => notionSyncer.triggerImmediateSync(pageOrDatasource.id)),
+      )
       return {
         results: simplifyNotionPages(data.results),
         next_cursor: data.next_cursor,

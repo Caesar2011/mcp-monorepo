@@ -60,14 +60,14 @@ export class EmbeddingService {
       const output = await this.model(texts, { pooling: 'mean', normalize: true })
       // The output shape depends on whether the input was a single string or an array.
       // We normalize it to always be an array of vectors for consistency.
-      if (output.dims.length === 2) {
+      if (!Array.isArray(text)) {
         // Input was a single string, result is a 1D tensor represented as a 2D array [1, dim]
-        const vector = Array.from(output.data as Float32Array)
-        return Array.isArray(text) ? [vector] : vector
+        return Array.from(output.data as Float32Array)
       } else {
         // Input was an array, result is a 2D tensor. We need to slice it.
         const vectors: number[][] = []
         const vectorSize = output.dims[1]
+        if (vectorSize !== 384) throw new EmbeddingError(`Unexpected vector size. Expected 384, got ${vectorSize}.`)
         const flatData = output.data as Float32Array
         for (let i = 0; i < output.dims[0]; i++) {
           vectors.push(Array.from(flatData.slice(i * vectorSize, (i + 1) * vectorSize)))

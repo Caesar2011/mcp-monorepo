@@ -107,7 +107,7 @@ export class StoreManager {
   public async getChunksByPath(filePath: string): Promise<VectorChunk[]> {
     const records = await this.table
       .query()
-      .where(`filePath = '${filePath.replace(/'/g, "''")}'`)
+      .where(`\`filePath\` = '${filePath.replace(/'/g, "''")}'`)
       .toArray()
     return records.map(DataMapper.toVectorChunk)
   }

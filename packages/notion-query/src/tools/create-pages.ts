@@ -13,6 +13,8 @@ import { getNotionClient } from '../lib/client.js'
 import { normalizeId } from '../lib/id-utils.js'
 import { parsePropertiesForCreate } from '../lib/property-parser.js'
 
+import type { NotionSyncer } from '../lib/notion-syncer.js'
+
 // The description is an exact copy of the provided tool definition [1].
 const description = `Creates one or more Notion pages with specified properties and content.
 Use "create-pages" when you need to create one or more new pages that don't exist yet.
@@ -68,7 +70,7 @@ Examples of creating pages:
 ]
 }`
 
-export const registerCreatePagesTool = (server: McpServer) =>
+export const registerCreatePagesTool = (server: McpServer, notionSyncer: NotionSyncer) =>
   registerTool(server, {
     name: 'create-pages',
     title: 'Create pages in Markdown',
@@ -189,6 +191,7 @@ export const registerCreatePagesTool = (server: McpServer) =>
     },
 
     async formatter(createdPages) {
+      await Promise.allSettled(createdPages.map((page) => notionSyncer.triggerImmediateSync(page.id)))
       const results = createdPages.map((page) => {
         const titleProperty = Object.values(page.properties).find((p) => p.type === 'title')
         const title =

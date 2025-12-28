@@ -12,6 +12,7 @@ import { z } from 'zod'
 import { getNotionClient } from '../lib/client.js'
 import { normalizeId } from '../lib/id-utils.js'
 import { notionToMarkdown } from '../lib/markdown-converter.js'
+import { type NotionSyncer } from '../lib/notion-syncer.js'
 import { parsePropertiesForUpdate } from '../lib/property-parser.js'
 
 const description = `Update a Notion page's properties or content.
@@ -46,7 +47,7 @@ function findAndModifyText(
   return fullText.replace(originalMatch, originalMatch + newText)
 }
 
-export const registerUpdatePageTool = (server: McpServer) =>
+export const registerUpdatePageTool = (server: McpServer, notionSyncer: NotionSyncer) =>
   registerTool(server, {
     name: 'notion-update-page',
     title: 'Update Notion page',
@@ -147,6 +148,7 @@ export const registerUpdatePageTool = (server: McpServer) =>
     },
 
     async formatter(updatedPage) {
+      await notionSyncer.triggerImmediateSync(updatedPage.id)
       return {
         page_id: updatedPage.id,
         url: updatedPage.url,

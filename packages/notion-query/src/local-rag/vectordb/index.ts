@@ -5,9 +5,10 @@ import { DatabaseError } from '../errors.js'
 import { StoreManager } from './manager.js'
 import { SchemaMigrator } from './migration.js'
 import { Retriever } from './retriever.js'
-import { getDocumentsSchema } from './schema.js'
+import { DataMapper, getDocumentsSchema } from './schema.js'
 
 import type {
+  DocumentMetadata,
   ListItem,
   ListOptions,
   QueryFilters,
@@ -36,8 +37,7 @@ export interface VectorStoreConfig {
 export class VectorStore {
   private readonly config: VectorStoreConfig
   private db: Connection
-  // This 'table' property refers to the documents/vector table.
-  public table!: Table // Use definite assignment assertion, as it's guaranteed by initialize
+  public table!: Table
   public retriever!: Retriever
   public manager!: StoreManager
   private ftsEnabled = false
@@ -92,7 +92,6 @@ export class VectorStore {
 
   /**
    * Inserts an array of vector chunks into the database.
-   * The table is guaranteed to exist by the initialize method.
    * @param chunks - An array of vector chunks to insert.
    */
   public async insertChunks(chunks: VectorChunk[]): Promise<void> {
@@ -100,8 +99,6 @@ export class VectorStore {
 
     try {
       await this.table.add(chunks as unknown as Record<string, unknown>[])
-      // Rebuilding the index on every insert is expensive.
-      // It's better to do this periodically via `optimize()`.
     } catch (error: unknown) {
       throw new DatabaseError('Failed to insert chunks into the database.', error)
     }
@@ -209,6 +206,36 @@ export class VectorStore {
   }
 
   /**
+   * Retrieves the most recently updated metadata for a specific file path.
+   * This is a read-only operation and does not use the write queue.
+   * @param filePath - The full path of the document.
+   * @returns A promise that resolves to the document's metadata or undefined if not found.
+   */
+  public async getLatestMetadata(filePath: string): Promise<DocumentMetadata | undefined> {
+    if (!this.table) {
+      return undefined
+    }
+
+    const records = await this.table
+      .query()
+      .select(['metadata'])
+      .where(`\`filePath\` = '${filePath.replace(/'/g, "''")}'`)
+      .toArray()
+
+    if (records.length === 0) {
+      return undefined
+    }
+
+    records.sort((a, b) => {
+      const dateA = (a.metadata as DocumentMetadata)?.updatedAt ?? ''
+      const dateB = (b.metadata as DocumentMetadata)?.updatedAt ?? ''
+      return dateB.localeCompare(dateA)
+    })
+
+    return DataMapper.toDocumentMetadata(records[0].metadata)
+  }
+
+  /**
    * Retrieves all chunks for a specific document path.
    */
   public async getChunksByPath(filePath: string): Promise<VectorChunk[]> {
@@ -239,7 +266,6 @@ export class VectorStore {
    */
   public async addWatchedPath(path: string, type: 'file' | 'folder', recursive: boolean): Promise<void> {
     const table = await this.db.openTable(WATCHED_PATHS_TABLE_NAME)
-    // Make it idempotent: delete any existing entry first.
     await table.delete(`path = '${path.replace(/'/g, "''")}'`).catch(() => {
       /* ignore if it doesn't exist */
     })

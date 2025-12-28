@@ -32,6 +32,8 @@ const RAG_INTRO_CONTENT = `LocalRAG is a powerful, private, and configurable loc
 This library allows developers to easily build applications that can reason about local files and data.
 Key features include file and folder ingestion, text and URL ingestion, and fast vector-based search.`
 
+const HEADING_ONLY = `# Too Small`
+
 const PROJECT_PHOENIX_CONTENT = `# Project Phoenix: A Next-Generation AI Assistant
 
 Project Phoenix is a new initiative focused on building an AI assistant that runs entirely on-device.
@@ -52,11 +54,13 @@ async function setupDemoData(dataPath: string): Promise<void> {
 
     const introFilePath = resolve(dataPath, 'rag-intro.txt')
     const phoenixFilePath = resolve(dataPath, 'project-phoenix.md')
+    const smallPath = resolve(dataPath, 'small.md')
 
     // Write both files asynchronously
     await Promise.all([
       writeFile(introFilePath, RAG_INTRO_CONTENT, 'utf-8'),
       writeFile(phoenixFilePath, PROJECT_PHOENIX_CONTENT, 'utf-8'),
+      writeFile(smallPath, HEADING_ONLY, 'utf-8'),
     ])
 
     console.log('  -> Created rag-intro.txt')

@@ -28,6 +28,9 @@ jobs:
         with:
           node-version-file: '.nvmrc'
           cache: 'yarn'
+      - name: RM Yarn Lock
+        run: |
+          rm -f yarn.lock
 
       - name: Install Dependencies
         run: yarn install

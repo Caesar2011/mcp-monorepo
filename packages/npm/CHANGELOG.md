@@ -1,5 +1,13 @@
 # @mcp-monorepo/npm
 
+## 1.1.4
+
+### Patch Changes
+
+- fd22b00: Fixed yarn versioning during publish
+- Updated dependencies [fd22b00]
+  - @mcp-monorepo/shared@1.1.1
+
 ## 1.1.3
 
 ### Patch Changes

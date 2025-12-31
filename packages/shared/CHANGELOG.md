@@ -1,5 +1,11 @@
 # @mcp-monorepo/shared
 
+## 1.1.1
+
+### Patch Changes
+
+- fd22b00: Fixed yarn versioning during publish
+
 ## 1.1.0
 
 ### Minor Changes

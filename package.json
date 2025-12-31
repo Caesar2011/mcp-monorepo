@@ -24,9 +24,7 @@
     "clean": "yarn workspaces foreach -A -p -t run clean",
     "cs:add": "changeset add",
     "cs:version": "changeset version",
-    "cs:publish": "changeset publish",
-    "noop": "echo hi",
-    "noop1": "yarn run noop"
+    "cs:publish": "node scripts/update-workspace-versions.js && changeset publish"
   },
   "author": "",
   "license": "ISC",

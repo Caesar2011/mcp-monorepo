@@ -1,4 +1,4 @@
-/* eslint-disable use-logger-not-console/replace-console-with-logger */
+/* eslint-disable use-logger-not-console/replace-console-with-logger,no-undef */
 /**
  * This script is a temporary solution for a common issue with monorepos, `changeset`, and `yarn workspaces`.
  * When publishing packages, workspace-protocol dependencies (e.g., "workspace:*") in `package.json`
@@ -92,7 +92,7 @@ for (const pkgName in workspaceVersionMap) {
 
   if (updated) {
     console.log(`  Writing updated package.json for ${packageFile.name}`)
-    writeFileSync(`${location}/package.json`, `${JSON.stringify(packageFile, null, 2)}\n`, 'utf-8')
+    writeFileSync(`${location}/package.json`, `${JSON.stringify(packageFile, undefined, 2)}\n`, 'utf-8')
   }
 }
 

@@ -1,5 +1,13 @@
 # @mcp-monorepo/notion-query
 
+## 1.3.1
+
+### Patch Changes
+
+- fd22b00: Fixed yarn versioning during publish
+- Updated dependencies [fd22b00]
+  - @mcp-monorepo/shared@1.1.1
+
 ## 1.3.0
 
 ### Minor Changes

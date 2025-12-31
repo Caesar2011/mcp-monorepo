@@ -1,6 +1,6 @@
 {
   "name": "@mcp-monorepo/location",
-  "version": "1.1.3",
+  "version": "1.1.4",
   "type": "module",
   "description": "MCP server for location-based tools using IP address lookup",
   "main": "dist/index.js",

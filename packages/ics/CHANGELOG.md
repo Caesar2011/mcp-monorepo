@@ -1,5 +1,13 @@
 # @mcp-monorepo/ics
 
+## 1.3.3
+
+### Patch Changes
+
+- fd22b00: Fixed yarn versioning during publish
+- Updated dependencies [fd22b00]
+  - @mcp-monorepo/shared@1.1.1
+
 ## 1.3.2
 
 ### Patch Changes

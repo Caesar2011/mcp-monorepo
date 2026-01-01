@@ -12,6 +12,7 @@ const OutputSchemaDef = {
     elevation: z.string(),
   }),
   hourly: z.record(
+    z.string(),
     z.object({
       temp: z.string(),
       wind: z.string(),
@@ -22,6 +23,7 @@ const OutputSchemaDef = {
     }),
   ),
   daily: z.record(
+    z.string(),
     z.object({
       sunrise: z.string(),
       sunset: z.string(),

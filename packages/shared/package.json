@@ -27,7 +27,7 @@
     "@modelcontextprotocol/sdk": "^1.0.0",
     "glossy": "^0.1.7",
     "winston": "^3.17.0",
-    "zod": "^3.25.76"
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@types/glossy": "^0.1.3",

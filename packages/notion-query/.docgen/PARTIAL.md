@@ -1,0 +1,1 @@
+This package provides a set of tools compliant with the Model Context Protocol for retrieving weather forecasts and geocoding locations. It uses the free, open-source Open-Meteo API and requires no API keys.

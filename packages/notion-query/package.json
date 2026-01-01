@@ -21,7 +21,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "clean": "rimraf dist tsconfig.tsbuildinfo"
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "generate-readme": "node ../../scripts/generate-readme.ts"
   },
   "dependencies": {
     "@huggingface/transformers": "^3.8.1",
@@ -40,7 +41,7 @@
     "notion-to-md": "^3.1.9",
     "papaparse": "^5.5.3",
     "pdf-parse": "^2.4.5",
-    "zod": "^3.25.76"
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@types/jsdom": "^27",

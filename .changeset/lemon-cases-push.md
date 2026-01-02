@@ -12,4 +12,4 @@
 '@mcp-monorepo/npm': minor
 ---
 
-generate READMEs for packages via MCP introspection, add docgen and scripts, bump zod to v4 with schema fixes, improve syslog/logger graceful shutdown
+added proper README files for all packages

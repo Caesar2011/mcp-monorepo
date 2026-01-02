@@ -21,10 +21,11 @@
     "typecheck": "tsc --noEmit",
     "clean": "rimraf dist tsconfig.tsbuildinfo",
     "syslog-server": "tsc-watch -p \".\" --onSuccess \"node ./dist/syslog/server.js\"",
-    "syslog-client": "tsc-watch --onSuccess \"node ./dist/syslog/client.js\""
+    "syslog-client": "tsc-watch --onSuccess \"node ./dist/syslog/client.js\"",
+    "generate-readme": "node ../../scripts/generate-readme.ts"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "glossy": "^0.1.7",
     "winston": "^3.17.0",
     "zod": "^4.2.1"
@@ -37,5 +38,6 @@
     "types-package-json": "^2.0.39",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
-  }
+  },
+  "license": "AGPL-3.0-only"
 }

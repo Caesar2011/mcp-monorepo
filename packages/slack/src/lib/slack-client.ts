@@ -1,25 +1,20 @@
-import * as process from 'node:process'
-
 import { logger } from '@mcp-monorepo/shared'
 import { type Logger, WebClient } from '@slack/web-api'
 import { type ResponseMetadata } from '@slack/web-api/dist/types/response/UsersConversationsResponse.js'
 
 import { getSlackEnv } from './env.js'
 
-process.env.XOXD_TOKEN =
-  'xoxd-jr18zhGSsNkaHfRNIxYb8%2BGLC7E29cwAd%2FxpWcHwx0Mv1%2BFwzIGy3xJJoFyVCGj0H4vHXd6wruGp572TEImktjuvsAJqIEgNaLAO4Vb6%2F7R9v2VdxtTwAuci6CVrMxybTUZUDrP9%2ForZEHgkZ3UtuZjOdvasHoc5vxCgVWbYhC437%2B2DUX%2Bpq9RkROEJN77XlaGBBfGtGQFmArlzCNI0wP0y'
-process.env.XOXC_TOKEN =
-  'xoxc-2172920488-1684049076881-9186239831959-de3028bca12d5c007ce90ba5c8f2de8647d5af6adcd1c0d84769447093876420'
-process.env.TENANT_ID = 'T0252T2EC'
+// Get all env vars once at the module level
+const { SLACK_WORKSPACE_URL, XOXC_TOKEN, XOXD_TOKEN, TENANT_ID } = getSlackEnv()
+const slackApiUrl = `${SLACK_WORKSPACE_URL}/api/`
 
-const token = getSlackEnv()
-export const slackClient = new WebClient(token.XOXC_TOKEN, {
-  slackApiUrl: 'https://netlight.slack.com/api/',
-  teamId: token.TENANT_ID,
+export const slackClient = new WebClient(XOXC_TOKEN, {
+  slackApiUrl,
+  teamId: TENANT_ID,
   logger: logger as Logger,
   requestInterceptor: (config) => {
     config.withCredentials = true
-    config.headers['Cookie'] = `d=${token.XOXD_TOKEN}`
+    config.headers['Cookie'] = `d=${XOXD_TOKEN}`
     return config
   },
 })
@@ -41,9 +36,6 @@ export async function* paginate<P extends { cursor?: string }, T extends { respo
 }
 
 export async function runSlackGet<T>(methodName: string): Promise<T> {
-  const { XOXD_TOKEN, XOXC_TOKEN, TENANT_ID } = getSlackEnv()
-
-  // Prepare cookies & headers
   const cookies = `d=${XOXD_TOKEN}`
   const sharedHeaders = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
@@ -57,7 +49,7 @@ export async function runSlackGet<T>(methodName: string): Promise<T> {
     Cookie: cookies,
     Authorization: `Bearer ${XOXC_TOKEN}`,
   }
-  const sectionsUrl = `https://netlight.slack.com/api/${methodName}?slack_route=${TENANT_ID}`
+  const sectionsUrl = `${slackApiUrl}${methodName}?slack_route=${TENANT_ID}`
 
   const response = await fetch(sectionsUrl, {
     credentials: 'include',
@@ -74,9 +66,6 @@ export async function runSlackGet<T>(methodName: string): Promise<T> {
 }
 
 export async function runSlackPost<T>(methodName: string, body: URLSearchParams): Promise<T> {
-  const { XOXD_TOKEN, XOXC_TOKEN, TENANT_ID } = getSlackEnv()
-
-  // Prepare cookies & headers
   const cookies = `d=${XOXD_TOKEN}`
   const sharedHeaders = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
@@ -90,7 +79,7 @@ export async function runSlackPost<T>(methodName: string, body: URLSearchParams)
     Cookie: cookies,
     Authorization: `Bearer ${XOXC_TOKEN}`,
   }
-  const sectionsUrl = `https://netlight.slack.com/api/${methodName}?slack_route=${TENANT_ID}`
+  const sectionsUrl = `${slackApiUrl}${methodName}?slack_route=${TENANT_ID}`
 
   const response = await fetch(sectionsUrl, {
     credentials: 'include',

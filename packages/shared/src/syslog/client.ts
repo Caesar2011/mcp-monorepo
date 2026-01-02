@@ -113,12 +113,12 @@ process.on('uncaughtException', async (error, origin) => {
   console.error(`Uncaught Exception on ${origin}:`, error)
   // Log the critical error
   logger.crit(`Uncaught Exception on ${origin}: ${error.stack ?? error.message}`)
-  await gracefulShutdown('uncaughtException', 1)
+  await gracefulShutdown('uncaughtException', 2)
 })
 
 process.on('unhandledRejection', async (reason, promise) => {
   // eslint-disable-next-line use-logger-not-console/replace-console-with-logger
   console.error('Unhandled Rejection at:', promise, 'reason:', reason)
   logger.crit(`Unhandled Rejection: ${reason instanceof Error ? reason.stack : String(reason)}`)
-  await gracefulShutdown('unhandledRejection', 1)
+  await gracefulShutdown('unhandledRejection', 3)
 })

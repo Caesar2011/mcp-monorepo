@@ -1,4 +1,5 @@
 /* eslint-disable use-logger-not-console/replace-console-with-logger */
+import { exec } from 'node:child_process'
 import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { join, resolve, basename } from 'node:path'
 
@@ -110,10 +111,14 @@ async function main(): Promise<void> {
   ]
 
   // 3. Write the final README file
+  const readmePath = join(packagePath, 'README.md')
   const finalReadme = sections.filter((s): s is string => !!s).join('\n\n')
-  await writeFile(join(packagePath, 'README.md'), finalReadme)
+  await writeFile(readmePath, finalReadme)
 
-  console.log(`${c.green}✓ README for ${pkgJson.name} successfully generated.${c.reset}`)
+  // 4. Stage the generated README file to git
+  await stageFileToGit(readmePath)
+
+  console.log(`${c.green}✓ README for ${pkgJson.name} successfully generated and staged.${c.reset}`)
   process.exit(0)
 }
 
@@ -282,7 +287,7 @@ function formatSchemaTable(title: string, schema: MappedToolDefinition['inputSch
 function generateFooter(pkgJson: PackageJson): string {
   const authorName = typeof pkgJson.author === 'object' ? pkgJson.author.name : pkgJson.author
   const licenseText = pkgJson.license
-    ? `This project is licensed under the ${pkgJson.license} License. See the [COPYRIGHT](./COPYRIGHT) file for details.`
+    ? `This project is licensed under the ${pkgJson.license} License. See the [LICENSE](./LICENSE) file for details.`
     : ''
   return `---
 ## Authors
@@ -358,6 +363,35 @@ async function readJsonFile<T>(filePath: string): Promise<T | undefined> {
 }
 
 /**
+ * Executes `git add` for the specified file path, with logging and error handling.
+ */
+async function stageFileToGit(filePath: string): Promise<void> {
+  try {
+    await new Promise<void>((resolve) => {
+      // Use the absolute path for git to avoid ambiguity
+      exec(`git add "${filePath}"`, (error, stdout, stderr) => {
+        if (error) {
+          // Soft fail: Warn instead of throwing an error, as git may not be available.
+          console.warn(
+            `${c.yellow}Warning: Could not stage ${basename(filePath)}. Is git installed and is this a git repository?${c.reset}`,
+          )
+          console.warn(`${c.gray}${stderr}${c.reset}`)
+          resolve() // Resolve without error to allow the script to continue
+          return
+        }
+        console.log(`${c.cyan}  -> Staged ${basename(filePath)} to git.${c.reset}`)
+        resolve()
+      })
+    })
+  } catch (gitError) {
+    console.warn(
+      `${c.yellow}Warning: An unexpected error occurred while staging ${basename(filePath)}.${c.reset}`,
+      gitError,
+    )
+  }
+}
+
+/**
  * Scans the 'packages' directory of the monorepo to find all public packages.
  */
 async function findMonorepoPublicPackages(monorepoRoot: string): Promise<PackageJson[]> {
@@ -378,7 +412,7 @@ async function findMonorepoPublicPackages(monorepoRoot: string): Promise<Package
         }
       }
     }
-  } catch (error) {
+  } catch {
     console.warn(`${c.yellow}Could not read packages directory to find other servers.${c.reset}`)
   }
   return results

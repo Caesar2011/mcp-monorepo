@@ -4,11 +4,11 @@ import { z } from 'zod'
 
 import { getNotionClient } from '../lib/client.js'
 import { simplifyNotionPages } from '../lib/parser.js'
+import { type ToolServices } from '../lib/types.js'
 
-import type { NotionSyncer } from '../lib/notion-syncer.js'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
-export const registerQueryDatasourceTool = (server: McpServer, notionSyncer: NotionSyncer) =>
+export const registerQueryDatasourceTool = (server: McpServer, services: ToolServices) =>
   registerTool(server, {
     name: 'query-datasource',
     title: 'Query a Notion Data Source',
@@ -79,7 +79,7 @@ export const registerQueryDatasourceTool = (server: McpServer, notionSyncer: Not
     },
     async formatter(data) {
       await Promise.allSettled(
-        data.results.map((pageOrDatasource) => notionSyncer.triggerImmediateSync(pageOrDatasource.id)),
+        data.results.map((pageOrDatasource) => services.notionSyncer?.triggerImmediateSync(pageOrDatasource.id)),
       )
       return {
         results: simplifyNotionPages(data.results),

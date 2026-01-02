@@ -1,10 +1,9 @@
 import { registerTool } from '@mcp-monorepo/shared'
 import { z } from 'zod'
 
+import { type ToolServices } from '../lib/types.js'
 import { type QueryResult } from '../local-rag/types.js'
 
-import type { NotionSyncer } from '../lib/notion-syncer.js'
-import type { LocalRAG } from '../local-rag/index.js'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
 /**
@@ -21,10 +20,9 @@ type NotionSearchResult = {
  * Registers the Notion search tool with the MCP server.
  * The tool uses a LocalRAG instance for searching and a NotionSyncer for metadata.
  * @param server - The McpServer instance.
- * @param localRag - The initialized LocalRAG instance.
- * @param notionSyncer - The initialized NotionSyncer instance.
+ * @param services - The initialized LocalRAG and NotionSyncer instance.
  */
-export const registerSearchTool = (server: McpServer, localRag: LocalRAG, notionSyncer: NotionSyncer) => {
+export const registerSearchTool = (server: McpServer, services: ToolServices) => {
   return registerTool(server, {
     name: 'search',
     title: 'Search Notion workspace',
@@ -72,13 +70,15 @@ export const registerSearchTool = (server: McpServer, localRag: LocalRAG, notion
     async fetcher(args): Promise<QueryResult[]> {
       // The core logic is just to query the LocalRAG instance.
       // We don't need the syncer state here, we'll use it in the formatter.
-      return localRag.query({
-        query: args.query,
-        limit: 5, // Return top 5 results
-      })
+      return (
+        services.localRag?.query({
+          query: args.query,
+          limit: 5, // Return top 5 results
+        }) ?? []
+      )
     },
     async formatter(ragResults: QueryResult[]): Promise<{ results: NotionSearchResult[] }> {
-      const syncState = notionSyncer.getSyncState()
+      const syncState = services.notionSyncer?.getSyncState()
       if (!syncState) {
         return { results: [] }
       }

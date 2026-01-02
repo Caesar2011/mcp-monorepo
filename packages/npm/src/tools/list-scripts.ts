@@ -5,7 +5,7 @@ import { registerTool } from '@mcp-monorepo/shared'
 import { type PackageJson } from 'types-package-json'
 import { z } from 'zod'
 
-import { getWorkingDirectory } from '../lib/getWorkingDirectory.js'
+import { getWorkingDirectory } from '../lib/project-context.js'
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 

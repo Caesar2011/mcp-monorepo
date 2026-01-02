@@ -4,6 +4,7 @@ import { paginate, runSlackGet, runSlackPost } from './slack-client.js'
 
 vi.mock('./env.js', () => ({
   getSlackEnv: vi.fn(() => ({
+    SLACK_WORKSPACE_URL: 'https://test-workspace.slack.com',
     XOXD_TOKEN: 'test-xoxd-token',
     XOXC_TOKEN: 'test-xoxc-token',
     TENANT_ID: 'T123456789',
@@ -105,7 +106,7 @@ describe('slack-client', () => {
 
       const result = await runSlackGet('test.method')
 
-      expect(fetch).toHaveBeenCalledWith('https://netlight.slack.com/api/test.method?slack_route=T123456789', {
+      expect(fetch).toHaveBeenCalledWith('https://test-workspace.slack.com/api/test.method?slack_route=T123456789', {
         credentials: 'include',
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',
@@ -152,7 +153,7 @@ describe('slack-client', () => {
       const body = new URLSearchParams({ param1: 'value1', param2: 'value2' })
       const result = await runSlackPost('test.method', body)
 
-      expect(fetch).toHaveBeenCalledWith('https://netlight.slack.com/api/test.method?slack_route=T123456789', {
+      expect(fetch).toHaveBeenCalledWith('https://test-workspace.slack.com/api/test.method?slack_route=T123456789', {
         credentials: 'include',
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0',

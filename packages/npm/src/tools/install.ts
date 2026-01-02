@@ -3,7 +3,7 @@ import { type McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
 
 import { executeCommand } from '../lib/executeCommand.js'
-import { getWorkingDirectory } from '../lib/getWorkingDirectory.js'
+import { getWorkingDirectory } from '../lib/project-context.js'
 
 export const registerInstallTool = (server: McpServer) =>
   registerTool(server, {

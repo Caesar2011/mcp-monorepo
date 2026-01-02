@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 
-import { createMcpServer } from '@mcp-monorepo/shared'
-import { logger } from '@mcp-monorepo/shared'
+import { createMcpServer, logger } from '@mcp-monorepo/shared'
 
 import { getPreparedIcs } from './lib/event-store-2.js'
 import { registerFetchEventsTool } from './tools/fetch-events.js'
 import { registerGetCurrentDatetimeTool } from './tools/get-current-datetime.js'
 import { registerSearchEventsTool } from './tools/search-events.js'
+
+let refreshInterval: NodeJS.Timeout | undefined
 
 createMcpServer({
   name: 'ics',
@@ -16,12 +17,20 @@ createMcpServer({
   async onReady() {
     await getPreparedIcs().refresh()
 
-    setInterval(
-      () =>
+    refreshInterval = setInterval(
+      () => {
+        logger.info('Performing scheduled hourly data refresh.')
         getPreparedIcs()
           .refresh()
-          .catch(() => logger.error),
+          .catch((err) => logger.error('Scheduled refresh failed:', err))
+      },
       1000 * 60 * 60,
     )
+  },
+  async onClose() {
+    if (refreshInterval) {
+      clearInterval(refreshInterval)
+      logger.info('Cleared scheduled refresh interval.')
+    }
   },
 })

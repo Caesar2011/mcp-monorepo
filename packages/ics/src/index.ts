@@ -13,15 +13,15 @@ createMcpServer({
   importMetaPath: import.meta.filename,
   title: 'ICS Calendar MCP Server',
   tools: [registerGetCurrentDatetimeTool, registerFetchEventsTool, registerSearchEventsTool],
-}).then(() => logger.error)
+  async onReady() {
+    await getPreparedIcs().refresh()
 
-getPreparedIcs()
-  .refresh()
-  .then(() => logger.error)
-setTimeout(
-  () =>
-    getPreparedIcs()
-      .refresh()
-      .then(() => logger.error),
-  1000 * 60 * 60,
-)
+    setInterval(
+      () =>
+        getPreparedIcs()
+          .refresh()
+          .catch(() => logger.error),
+      1000 * 60 * 60,
+    )
+  },
+})

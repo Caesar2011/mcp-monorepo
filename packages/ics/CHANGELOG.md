@@ -1,5 +1,24 @@
 # @mcp-monorepo/ics
 
+## 1.4.0
+
+### Minor Changes
+
+- 7f6ee0a: generate READMEs for packages via MCP introspection, add docgen and scripts, bump zod to v4 with schema fixes, improve syslog/logger graceful shutdown
+- 2c227d5: added proper README files for all packages
+- 690e3aa: add TOOL_ADVISORY_ONLY mode to skip tool execution and onReady hooks
+
+### Patch Changes
+
+- 2c227d5: added proper README files for all packages
+- 2c227d5: added proper README files for all packages
+- Updated dependencies [7f6ee0a]
+- Updated dependencies [2c227d5]
+- Updated dependencies [2c227d5]
+- Updated dependencies [690e3aa]
+- Updated dependencies [2c227d5]
+  - @mcp-monorepo/shared@1.2.0
+
 ## 1.3.3
 
 ### Patch Changes

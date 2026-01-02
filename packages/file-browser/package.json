@@ -1,6 +1,6 @@
 {
   "name": "@mcp-monorepo/file-browser",
-  "version": "1.1.4",
+  "version": "1.2.0",
   "type": "module",
   "description": "MCP server for file system browsing and manipulation (search, ls, tree, grep, open, write, move, mkdir)",
   "main": "dist/index.js",

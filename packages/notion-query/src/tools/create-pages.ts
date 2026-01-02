@@ -12,8 +12,7 @@ import { z } from 'zod'
 import { getNotionClient } from '../lib/client.js'
 import { normalizeId } from '../lib/id-utils.js'
 import { parsePropertiesForCreate } from '../lib/property-parser.js'
-
-import type { NotionSyncer } from '../lib/notion-syncer.js'
+import { type ToolServices } from '../lib/types.js'
 
 // The description is an exact copy of the provided tool definition [1].
 const description = `Creates one or more Notion pages with specified properties and content.
@@ -70,7 +69,7 @@ Examples of creating pages:
 ]
 }`
 
-export const registerCreatePagesTool = (server: McpServer, notionSyncer: NotionSyncer) =>
+export const registerCreatePagesTool = (server: McpServer, services: ToolServices) =>
   registerTool(server, {
     name: 'create-pages',
     title: 'Create pages in Markdown',
@@ -82,7 +81,7 @@ export const registerCreatePagesTool = (server: McpServer, notionSyncer: NotionS
             .object({
               content: z.string().describe('The content of the new page, using Notion Markdown.').optional(),
               properties: z
-                .record(z.union([z.string(), z.number(), z.null()]))
+                .record(z.string(), z.union([z.string(), z.number(), z.null()]))
                 .describe(
                   'The properties of the new page, which is a JSON map of property names to SQLite values.\nFor pages in a database, use the SQLite schema definition shown in <database>.\nFor pages outside of a database, the only allowed property is "title", which is the title of the page and is automatically shown at the top of the page as a large heading.',
                 ),
@@ -191,7 +190,7 @@ export const registerCreatePagesTool = (server: McpServer, notionSyncer: NotionS
     },
 
     async formatter(createdPages) {
-      await Promise.allSettled(createdPages.map((page) => notionSyncer.triggerImmediateSync(page.id)))
+      await Promise.allSettled(createdPages.map((page) => services.notionSyncer?.triggerImmediateSync(page.id)))
       const results = createdPages.map((page) => {
         const titleProperty = Object.values(page.properties).find((p) => p.type === 'title')
         const title =

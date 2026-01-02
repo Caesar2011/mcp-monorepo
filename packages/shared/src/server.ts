@@ -3,13 +3,14 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 
 import { logger } from './syslog/client.js'
 import { type MaybePromise } from './types.js'
-import { getPackageJson } from './utils.js'
+import { getPackageJson, IS_TOOL_ADVISORY_ONLY } from './utils.js'
 
 export async function createMcpServer(serverOptions: {
   name: string
   importMetaPath: string
   title: string
   tools: ((server: McpServer) => MaybePromise<void>)[]
+  onReady?: () => MaybePromise<void>
   onClose?: () => MaybePromise<void>
 }) {
   logger.setName(serverOptions.name)
@@ -23,19 +24,29 @@ export async function createMcpServer(serverOptions: {
   await Promise.all(serverOptions.tools.map(async (tool) => await tool(server)))
 
   const transport = new StdioServerTransport()
-  server.connect(transport).then(() => logger.info(`Server "${serverOptions.name}" connected`))
-
-  process.on('SIGINT', async () => {
-    logger.error(`SIGINT received, disconnecting server "${serverOptions.name}"...`)
-    await server.close()
-    await serverOptions.onClose?.()
-    process.exit(0)
+  server.connect(transport).then(() => {
+    logger.info(`Server "${serverOptions.name}" connected`)
+    if (!IS_TOOL_ADVISORY_ONLY) {
+      Promise.resolve(serverOptions.onReady?.()).catch((err) => {
+        logger.error('Error during onReady execution:', err)
+        process.exit(1)
+      })
+    } else {
+      logger.warn('Running in TOOL_ADVISORY_ONLY mode. Skipping onReady hooks.')
+    }
   })
 
-  process.on('SIGTERM', async () => {
-    logger.error(`SIGTERM received, disconnecting server "${serverOptions.name}"...`)
+  const shutdown = async (signal: string) => {
+    logger.error(`${signal} received, disconnecting server "${serverOptions.name}"...`)
+    if (!IS_TOOL_ADVISORY_ONLY) {
+      await serverOptions.onClose?.()
+    }
     await server.close()
-    await serverOptions.onClose?.()
+    await transport.close()
+    await logger.close()
     process.exit(0)
-  })
+  }
+
+  process.on('SIGINT', () => shutdown('SIGINT'))
+  process.on('SIGTERM', () => shutdown('SIGTERM'))
 }

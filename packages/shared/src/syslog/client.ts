@@ -1,13 +1,10 @@
-import * as process from 'node:process'
-
 import { createLogger, format } from 'winston'
 
 import { SyslogTransport } from './SyslogTransport.js'
 import { SyslogSeverityLevels } from './types.js'
 
-// Environment variables
-const SYSLOG_SERVER_HOST = '127.0.0.1' // Address of the syslog server
-const SYSLOG_SERVER_PORT = 12345 // Port defined in the syslog server
+const SYSLOG_SERVER_HOST = '127.0.0.1'
+const SYSLOG_SERVER_PORT = 12345
 
 const transport = new SyslogTransport({
   host: SYSLOG_SERVER_HOST,
@@ -15,7 +12,6 @@ const transport = new SyslogTransport({
   appName: process.env.APP_NAME ?? 'syslog-client',
 })
 
-// Configure winston logger
 const _logger = createLogger({
   level: 'debug',
   levels: SyslogSeverityLevels,
@@ -27,11 +23,10 @@ const _logger = createLogger({
 })
 
 const parseMessage = (...message: unknown[]): string => {
-  // Custom replacer for JSON.stringify to handle functions, symbols, and errors gracefully
   const replacer = (key: string, value: unknown) => {
-    if (typeof value === 'symbol') return value.toString() // Convert symbols to string
-    if (typeof value === 'function') return `[Function: ${value.name || 'anonymous'}]` // Convert functions to string
-    return value // Default case for other values
+    if (typeof value === 'symbol') return value.toString()
+    if (typeof value === 'function') return `[Function: ${value.name || 'anonymous'}]`
+    return value
   }
 
   return message
@@ -41,16 +36,14 @@ const parseMessage = (...message: unknown[]): string => {
       }
 
       if (typeof item === 'function') {
-        return `[Function: ${item.name || 'anonymous'}]` // Convert standalone functions
+        return `[Function: ${item.name || 'anonymous'}]`
       }
 
-      // eslint-disable-next-line no-restricted-syntax
-      if (typeof item === 'object' && item !== null) {
+      if (typeof item === 'object' && item) {
         if (item instanceof Error) return item.stack ?? item.message
         try {
           const baseObjectString = JSON.stringify(item, replacer, 2)
 
-          // Include properties referenced by symbols
           const symbols = Object.getOwnPropertySymbols(item)
             // @ts-expect-error Checked before
             .map((symbol) => `[${symbol.toString()}]: ${String(item[symbol])}`)
@@ -58,17 +51,17 @@ const parseMessage = (...message: unknown[]): string => {
 
           return symbols ? `${baseObjectString.slice(0, -1)}, ${symbols}\n}` : baseObjectString
         } catch {
-          return '[Unserializable]' // Handle circular references or non-serializable parts
+          return '[Unserializable]'
         }
       }
 
       try {
-        return String(item) // Fallback for primitives and serializable values
+        return String(item)
       } catch {
-        return '[Unstringifiable]' // Catch-all for unexpected cases
+        return '[Unstringifiable]'
       }
     })
-    .join(' ') // Join output with spaces to mimic console.log
+    .join(' ')
 }
 
 export const logger = {
@@ -87,7 +80,45 @@ export const logger = {
   getLevel: () => _logger.level,
   setLevel: (_level: string) => {},
   setName: (name: string) => transport.setName(name),
-  close: (): void => {
-    _logger.close()
+
+  close: async (): Promise<void> => {
+    // We call the transport's close directly because winston's logger.close() is synchronous
+    // and won't wait for our async transport to finish.
+    await transport.close()
   },
 }
+
+let isShuttingDown = false
+
+async function gracefulShutdown(signal: string, exitCode = 0) {
+  if (isShuttingDown) return
+  isShuttingDown = true
+
+  try {
+    await logger.close()
+  } catch (e) {
+    // eslint-disable-next-line use-logger-not-console/replace-console-with-logger
+    console.error('Error during graceful shutdown:', e)
+    exitCode = 1
+  } finally {
+    process.exit(exitCode)
+  }
+}
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
+process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+
+process.on('uncaughtException', async (error, origin) => {
+  // eslint-disable-next-line use-logger-not-console/replace-console-with-logger
+  console.error(`Uncaught Exception on ${origin}:`, error)
+  // Log the critical error
+  logger.crit(`Uncaught Exception on ${origin}: ${error.stack ?? error.message}`)
+  await gracefulShutdown('uncaughtException', 2)
+})
+
+process.on('unhandledRejection', async (reason, promise) => {
+  // eslint-disable-next-line use-logger-not-console/replace-console-with-logger
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason)
+  logger.crit(`Unhandled Rejection: ${reason instanceof Error ? reason.stack : String(reason)}`)
+  await gracefulShutdown('unhandledRejection', 3)
+})

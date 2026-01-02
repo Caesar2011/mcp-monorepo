@@ -1,7 +1,7 @@
 export { registerTool } from './tool.js'
 export { formatter } from './formatter.js'
 export { createMcpServer } from './server.js'
-export { getPackageJson, findProjectRoot, performKeywordSearch } from './utils.js'
+export { getPackageJson, findProjectRoot, performKeywordSearch, IS_TOOL_ADVISORY_ONLY } from './utils.js'
 export { SchemaTypeOf, MaybePromise } from './types.js'
 export { RefreshablePromise } from './RefreshablePromise.js'
 export { ThrottledExecutor } from './ThrottledExecutor.js'

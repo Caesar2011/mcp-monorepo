@@ -11,7 +11,7 @@
     "build:workspaces": "yarn workspaces foreach -A -p -t run build",
     "dev": "yarn workspaces foreach -A -p -t run dev",
     "test": "yarn workspaces foreach -A -p -t run test",
-    "test:changed": "node scripts/run-on-changed.js test",
+    "test:changed": "node scripts/run-on-changed.ts test",
     "test:watch": "yarn workspaces foreach -A -p -t run test:watch",
     "test:coverage": "yarn workspaces foreach -A -p -t run test:coverage",
     "lint:prettier": "prettier --write .",
@@ -19,7 +19,9 @@
     "lint": "yarn lint:prettier && yarn lint:eslint",
     "lint-staged": "lint-staged",
     "typecheck": "yarn workspaces foreach -A -p -t run typecheck",
-    "typecheck:changed": "node scripts/run-on-changed.js typecheck",
+    "typecheck:changed": "node scripts/run-on-changed.ts typecheck",
+    "generate-readme": "yarn workspaces foreach -A -i -t run generate-readme",
+    "generate-readme:changed": "node scripts/run-on-changed.ts generate-readme --manual",
     "prepare": "husky",
     "clean": "yarn workspaces foreach -A -p -t run clean",
     "cs:add": "changeset add",
@@ -27,13 +29,14 @@
     "cs:publish": "node scripts/update-workspace-versions.js && changeset publish"
   },
   "author": "",
-  "license": "ISC",
+  "license": "AGPL-3.0-only",
   "description": "MCP Tools Monorepo with TypeScript support",
   "devDependencies": {
     "@changesets/cli": "^2.29.8",
     "@changesets/git": "^3.0.4",
     "@changesets/write": "^0.4.0",
     "@eslint/js": "^9.29.0",
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "@types/node": "^22.14.1",
     "@typescript-eslint/eslint-plugin": "^8.34.0",
     "eslint": "^9.24.0",
@@ -48,7 +51,9 @@
     "types-package-json": "^2.0.39",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.35.0",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "why-is-node-running": "^3.2.2",
+    "why-is-node-still-running": "^1.0.0"
   },
   "lint-staged": {
     "*.{ts,tsx,json,mjs,md}": [

@@ -17,14 +17,13 @@ import { z } from 'zod'
 import { getNotionClient } from '../lib/client.js'
 import { normalizeId } from '../lib/id-utils.js'
 import { formatDatabaseToMarkdown, formatPageToMarkdown } from '../lib/response-formatter.js'
-
-import type { NotionSyncer } from '../lib/notion-syncer.js'
+import { type ToolServices } from '../lib/types.js'
 
 type FetchedData =
   | { type: 'page'; page: GetPageResponse; blocks: ListBlockChildrenResponse }
   | { type: 'database'; database: GetDatabaseResponse; data_sources: GetDataSourceResponse[] }
 
-export const registerFetchTool = (server: McpServer, notionSyncer: NotionSyncer) =>
+export const registerFetchTool = (server: McpServer, services: ToolServices) =>
   registerTool(server, {
     name: 'fetch',
     title: 'Fetch Notion entities',
@@ -81,7 +80,7 @@ https://notion.so/page-url?"
         const page = await notion.pages.retrieve({ page_id: entityId })
         const blocks = await notion.blocks.children.list({ block_id: entityId })
         return { type: 'page', page, blocks }
-      } catch (pageError) {
+      } catch {
         try {
           const databaseResponse = (await notion.databases.retrieve({
             database_id: entityId,
@@ -94,14 +93,14 @@ https://notion.so/page-url?"
           const data_sources = await Promise.all(dataSourcePromises)
 
           return { type: 'database', database: databaseResponse, data_sources }
-        } catch (dbError) {
+        } catch {
           throw new Error(`Could not fetch '${entityId}' as a page or database.`)
         }
       }
     },
     async formatter(data) {
       if (data.type === 'page') {
-        await notionSyncer.triggerImmediateSync(data.page.id)
+        await services.notionSyncer?.triggerImmediateSync(data.page.id)
         return {
           markdown: await formatPageToMarkdown(
             data.page as PageObjectResponse,

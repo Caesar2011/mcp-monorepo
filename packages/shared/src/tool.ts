@@ -2,6 +2,7 @@ import { z, type ZodRawShape } from 'zod'
 
 import { logger } from './syslog/client.js'
 import { type MaybePromise, type SchemaTypeOf } from './types.js'
+import { IS_TOOL_ADVISORY_ONLY } from './utils.js'
 
 import type { McpServer, ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { RequestHandlerExtra } from '@modelcontextprotocol/sdk/shared/protocol.js'
@@ -105,6 +106,12 @@ export function registerTool<T, InputArgs extends ZodRawShape, OutputArgs extend
       },
     },
     (async (args: SchemaTypeOf<InputArgs>, _extra: RequestHandlerExtra<ServerRequest, ServerNotification>) => {
+      if (IS_TOOL_ADVISORY_ONLY) {
+        const errorMessage = 'Tool execution is disabled in TOOL_ADVISORY_ONLY mode.'
+        logger.warn(errorMessage)
+        throw new Error(errorMessage)
+      }
+
       const returner = USE_STRUCTURED_CONTENT ? returnStructuredContent : returnTextContent
       try {
         const result = await config.fetcher(args)

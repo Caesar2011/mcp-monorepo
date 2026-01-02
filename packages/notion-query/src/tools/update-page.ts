@@ -12,8 +12,8 @@ import { z } from 'zod'
 import { getNotionClient } from '../lib/client.js'
 import { normalizeId } from '../lib/id-utils.js'
 import { notionToMarkdown } from '../lib/markdown-converter.js'
-import { type NotionSyncer } from '../lib/notion-syncer.js'
 import { parsePropertiesForUpdate } from '../lib/property-parser.js'
+import { type ToolServices } from '../lib/types.js'
 
 const description = `Update a Notion page's properties or content.
 Notion page properties are a JSON map of property names to SQLite values.
@@ -47,7 +47,7 @@ function findAndModifyText(
   return fullText.replace(originalMatch, originalMatch + newText)
 }
 
-export const registerUpdatePageTool = (server: McpServer, notionSyncer: NotionSyncer) =>
+export const registerUpdatePageTool = (server: McpServer, services: ToolServices) =>
   registerTool(server, {
     name: 'notion-update-page',
     title: 'Update Notion page',
@@ -58,7 +58,7 @@ export const registerUpdatePageTool = (server: McpServer, notionSyncer: NotionSy
           .object({
             page_id: z.string().describe('The ID of the page to update, with or without dashes.'),
             command: z.literal('update_properties'),
-            properties: z.record(z.union([z.string(), z.number(), z.boolean(), z.null()])),
+            properties: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])),
           })
           .strict(),
         z
@@ -148,7 +148,7 @@ export const registerUpdatePageTool = (server: McpServer, notionSyncer: NotionSy
     },
 
     async formatter(updatedPage) {
-      await notionSyncer.triggerImmediateSync(updatedPage.id)
+      await services.notionSyncer?.triggerImmediateSync(updatedPage.id)
       return {
         page_id: updatedPage.id,
         url: updatedPage.url,

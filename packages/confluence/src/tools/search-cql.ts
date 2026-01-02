@@ -24,7 +24,7 @@ export const registerSearchCqlTool = (server: McpServer) =>
           title: z.string().optional(),
           key: z.string().optional(),
           name: z.string().optional(),
-          _expandable: z.record(z.string().optional()),
+          _expandable: z.record(z.string(), z.string().optional()),
         }),
       ),
       total: z.number().optional(),

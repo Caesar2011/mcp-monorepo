@@ -19,7 +19,7 @@ export const registerOpenPageTool = (server: McpServer) =>
       type: z.enum(['page', 'global']),
       title: z.string(),
       body: z.string(),
-      _expandable: z.record(z.string().optional()),
+      _expandable: z.record(z.string(), z.string().optional()),
     },
     isReadOnly: true,
     async fetcher({ pageId }) {

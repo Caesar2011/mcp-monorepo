@@ -10,7 +10,7 @@ export async function findProjectRoot(currentDir: string) {
     try {
       await fs.access(packageJsonPath)
       return dir
-    } catch (_) {
+    } catch {
       const parentDir = path.resolve(dir, '../')
       if (parentDir === dir) {
         throw new Error('package.json not found in any parent directory.')
@@ -72,3 +72,5 @@ export function performKeywordSearch<T>(
 
   return resultsWithScores
 }
+
+export const IS_TOOL_ADVISORY_ONLY = process.env.TOOL_ADVISORY_ONLY === 'true'

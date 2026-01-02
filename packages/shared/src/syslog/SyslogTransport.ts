@@ -11,9 +11,11 @@ interface SyslogTransportOptions {
   appName: string
 }
 
-// UDP transport for sending logs
 export class SyslogTransport extends transports.Console {
   private udpClient: dgram.Socket
+  private pendingMessages = 0
+  private isClosing = false
+  private closeResolver?: () => void
 
   constructor(private opts: SyslogTransportOptions) {
     super({})
@@ -21,6 +23,11 @@ export class SyslogTransport extends transports.Console {
   }
 
   log(info: LogEntry, callback: () => void) {
+    if (this.isClosing) {
+      callback()
+      return
+    }
+
     setImmediate(() => this.emit('logged', info))
 
     const message = createSyslogMessage({
@@ -29,10 +36,19 @@ export class SyslogTransport extends transports.Console {
       message: info.message,
     })
 
-    // Send log message via UDP
+    this.pendingMessages++
+
     this.udpClient.send(Buffer.from(message), 0, message.length, this.opts.port, this.opts.host, (err) => {
       // eslint-disable-next-line use-logger-not-console/replace-console-with-logger
       if (err) console.error(`Failed to send log: ${err.message}`)
+
+      this.pendingMessages--
+
+      if (this.isClosing && this.pendingMessages === 0 && this.closeResolver) {
+        this.closeResolver()
+        this.closeResolver = undefined
+      }
+
       callback()
     })
   }
@@ -41,9 +57,18 @@ export class SyslogTransport extends transports.Console {
     this.opts.appName = name
   }
 
-  close(): void {
-    if (this.udpClient) {
+  /**
+   * Asynchronously waits for all pending logs to be sent and then closes the UDP socket.
+   */
+  public async close(): Promise<void> {
+    this.isClosing = true
+    if (this.pendingMessages === 0) {
       this.udpClient.close()
+      return
     }
+    await new Promise<void>((resolve) => {
+      this.closeResolver = resolve
+    })
+    this.udpClient.close()
   }
 }

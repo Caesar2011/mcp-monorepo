@@ -20,14 +20,15 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit",
-    "clean": "rimraf dist tsconfig.tsbuildinfo"
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "generate-readme": "node ../../scripts/generate-readme.ts"
   },
   "dependencies": {
     "@mcp-monorepo/shared": "workspace:*",
-    "@modelcontextprotocol/sdk": "^1.0.0",
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "html-to-text": "^9.0.5",
     "imapflow": "^1.0.191",
-    "zod": "^3.25.76"
+    "zod": "^4.2.1"
   },
   "devDependencies": {
     "@types/html-to-text": "^9.0.4",
@@ -36,5 +37,6 @@
     "rimraf": "^6.0.1",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
-  }
+  },
+  "license": "AGPL-3.0-only"
 }

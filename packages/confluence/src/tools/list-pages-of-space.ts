@@ -22,7 +22,7 @@ export const registerListSpacePagesTool = (server: McpServer) =>
           id: z.string(),
           type: z.enum(['page', 'global']),
           title: z.string(),
-          _expandable: z.record(z.string().optional()),
+          _expandable: z.record(z.string(), z.string().optional()),
         }),
       ),
       next: z.string().optional(),

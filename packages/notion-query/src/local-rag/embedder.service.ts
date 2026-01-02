@@ -23,6 +23,7 @@ export class EmbeddingService {
         progress_callback: (info) => {
           if (info.status === 'progress') logger.info(`Downloading model: ${info.file} [${Math.round(info.progress)}%]`)
         },
+        dtype: 'fp32',
       })
       logger.info('Main thread: Model cache is ready.')
     } catch (error) {
@@ -36,7 +37,9 @@ export class EmbeddingService {
     this.initPromise = (async () => {
       try {
         env.cacheDir = cacheDir
-        this.model = await EmbeddingService.getFeatureExtractionPipeline(modelPath)
+        this.model = await EmbeddingService.getFeatureExtractionPipeline(modelPath, {
+          dtype: 'fp32',
+        })
       } catch (error) {
         this.initPromise = undefined
         throw new EmbeddingError(`Worker failed to initialize embedding model.`, error)

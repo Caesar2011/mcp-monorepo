@@ -1,5 +1,11 @@
 # @mcp-monorepo/ics
 
+## 1.5.0
+
+### Minor Changes
+
+- 54413fe: add support for Windows timezone identifiers
+
 ## 1.4.0
 
 ### Minor Changes

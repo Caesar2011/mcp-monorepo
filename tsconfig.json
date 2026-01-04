@@ -15,6 +15,7 @@
     { "path": "./packages/slack" },
     { "path": "./packages/confluence" },
     { "path": "./packages/jira"},
-    { "path": "./packages/notion-query"}
+    { "path": "./packages/notion-query"},
+    { "path": "./packages/maps"}
   ]
 }

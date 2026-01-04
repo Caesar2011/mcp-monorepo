@@ -1,12 +1,14 @@
 import { DateTime, FixedOffsetZone } from 'luxon'
 
 import { InvalidRruleError, TimeZoneDefinitionNotFoundError } from './errors.js'
+import { createTimeZoneResolver } from './timezone-processor.js'
 import {
   type CalAddress,
   type Freq,
   type Geo,
   type IcsProperty,
   type RecurrenceRule,
+  type TimeZoneData,
   type TimeZoneResolver,
   type Weekday,
 } from './types.js'
@@ -78,38 +80,43 @@ export function parseCalAddress(prop: IcsProperty | undefined): CalAddress | und
 
 // --- Date, Time & Offset Parsers ---
 
+// Create a default resolver at the module level with an empty VTIMEZONE map.
+// This resolver can still handle Windows and IANA timezones.
+const defaultResolver = createTimeZoneResolver(new Map<string, TimeZoneData>())
+
 /**
  * Parses an iCalendar DATE-TIME or DATE property into a Luxon DateTime object.
  * Handles different formats, including date-only values, UTC time, and times with a TZID parameter.
- * It uses the provided timezone resolver for VTIMEZONE definitions and falls back to Luxon's
- * built-in IANA database for standard timezones.
+ * It uses a unified logic for all zoned times by treating date-only values as a date-time at midnight.
  * @param prop - The IcsProperty containing the date value and parameters.
- * @param resolver - The optional timezone resolver for VTIMEZONE components.
+ * @param resolver - An optional, pre-configured timezone resolver (e.g., from VTIMEZONE components).
  * @returns A Luxon DateTime object.
  */
 export function parseIcsDateTime(prop: IcsProperty, resolver?: TimeZoneResolver): DateTime {
   const { value, params } = prop
-  const tzid = params['TZID'] === 'Romance Standard Time' ? 'Europe/Paris' : params['TZID']
+  const tzid = params['TZID']
   const isDateOnly = params['VALUE'] === 'DATE'
-
-  if (isDateOnly) {
-    // For date-only values, parse as a date and treat it as local or in the specified zone's start of day.
-    return DateTime.fromFormat(value, 'yyyyMMdd', { zone: tzid || 'local' })
-  }
+  const effectiveResolver = resolver ?? defaultResolver
 
   if (value.endsWith('Z')) {
-    // Value is explicitly in UTC.
     return DateTime.fromISO(value, { zone: 'utc' })
   }
 
-  if (tzid && resolver) {
-    try {
-      const localDt = DateTime.fromFormat(value, "yyyyMMdd'T'HHmmss", { zone: 'local' })
+  // A DATE-only value like '20231027' is treated as '20231027T000000'.
+  const dateTimeValue = isDateOnly ? `${value}T000000` : value
+  const FORMAT = "yyyyMMdd'T'HHmmss"
 
+  if (tzid) {
+    const ianaDt = DateTime.fromFormat(dateTimeValue, FORMAT, { zone: tzid })
+    if (ianaDt.isValid) {
+      return ianaDt
+    }
+
+    try {
+      const localDt = DateTime.fromFormat(dateTimeValue, FORMAT, { zone: 'local' })
       if (!localDt.isValid) return localDt
 
-      const offsetMinutes = resolver(localDt, tzid)
-
+      const offsetMinutes = effectiveResolver(localDt, tzid)
       const zone = FixedOffsetZone.instance(offsetMinutes)
       return localDt.setZone(zone, { keepLocalTime: true })
     } catch (error) {
@@ -121,17 +128,9 @@ export function parseIcsDateTime(prop: IcsProperty, resolver?: TimeZoneResolver)
     }
   }
 
-  if (tzid) {
-    // Per RFC 5545, parse with the specified timezone identifier.
-    // Fallback logic for standard IANA timezones (e.g., 'Europe/Paris') or when resolver fails.
-    // Luxon handles DST gaps by rolling forward to the next valid time,
-    // which correctly determines the absolute instant in time.
-    return DateTime.fromFormat(value, "yyyyMMdd'T'HHmmss", { zone: tzid })
-  }
-
-  // A time without 'Z' or TZID is a "floating" time.
-  // We parse it as local time according to the machine's settings.
-  return DateTime.fromFormat(value, "yyyyMMdd'T'HHmmss", { zone: 'local' })
+  // No TZID and no 'Z' suffix means it's a "floating" time.
+  // We interpret this according to the local machine's timezone.
+  return DateTime.fromFormat(dateTimeValue, FORMAT, { zone: 'local' })
 }
 
 /**

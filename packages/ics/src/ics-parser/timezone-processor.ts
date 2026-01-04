@@ -1,4 +1,6 @@
+import { logger } from '@mcp-monorepo/shared'
 import { DateTime, FixedOffsetZone } from 'luxon'
+import { findIana } from 'windows-iana'
 
 import { InvalidObservanceError, TimeZoneDefinitionNotFoundError } from './errors.js'
 import { parseDateTimeList, parseOffset, parseRruleString } from './property-parsers.js'
@@ -13,9 +15,10 @@ import {
 import { findProperty, findProperties } from './utils.js'
 
 /**
- * Buffer for expanding transitions into the future.
+ * Defines the possible outcomes of resolving a timezone identifier.
+ * This allows us to cache the *method* of resolution, not just the data.
  */
-const EXPANSION_RANGE_BUFFER_YEARS = 1
+type ResolutionStrategy = { type: 'tzData'; data: TimeZoneData } | { type: 'intl'; zone: string } | { type: 'notFound' }
 
 /**
  * Processes a single VTIMEZONE component into a structured TimeZoneData object.
@@ -247,17 +250,53 @@ export function findOffset(localTime: DateTime, tzInfo: TimeZoneData): number {
  * @returns A TimeZoneResolver function.
  */
 export function createTimeZoneResolver(tzData: Map<string, TimeZoneData>): TimeZoneResolver {
+  const resolutionCache = new Map<string, ResolutionStrategy>()
+  const supportedIntlZones = new Set(Intl.supportedValuesOf('timeZone'))
+
+  const resolveAndCacheTzid = (tzid: string): ResolutionStrategy => {
+    const ianaZones = [tzid, ...findIana(tzid)]
+
+    for (const zone of ianaZones) {
+      // Priority 1: Check our pre-built `tzData`.
+      const tzInfo = tzData.get(zone)
+      if (tzInfo) {
+        const strategy: ResolutionStrategy = { type: 'tzData', data: tzInfo }
+        resolutionCache.set(tzid, strategy)
+        return strategy
+      }
+    }
+
+    for (const zone of ianaZones) {
+      // Priority 2: Check for native `Intl` support as a fallback.
+      if (supportedIntlZones.has(zone)) {
+        logger.debug(`TZID '${tzid}' not in tzData, but found native support for alias '${zone}'.`)
+        const strategy: ResolutionStrategy = { type: 'intl', zone }
+        resolutionCache.set(tzid, strategy)
+        return strategy
+      }
+    }
+
+    logger.debug(`No valid timezone definition or native support found for TZID '${tzid}'.`)
+    const strategy: ResolutionStrategy = { type: 'notFound' }
+    resolutionCache.set(tzid, strategy)
+    return strategy
+  }
+
   return (localTime: DateTime, tzid: string): number => {
     if (!localTime.isValid) {
       throw new Error('Invalid input DateTime')
     }
-    const tzInfo = tzData.get(tzid)
-    if (!tzInfo) {
-      if (Intl.supportedValuesOf('timeZone').includes(tzid)) {
-        return localTime.setZone(tzid, { keepLocalTime: true }).offset
-      }
-      throw new TimeZoneDefinitionNotFoundError(tzid)
+
+    const strategy = resolutionCache.get(tzid) ?? resolveAndCacheTzid(tzid)
+    switch (strategy.type) {
+      case 'tzData':
+        return findOffset(localTime, strategy.data)
+
+      case 'intl':
+        return localTime.setZone(strategy.zone, { keepLocalTime: true }).offset
+
+      case 'notFound':
+        throw new TimeZoneDefinitionNotFoundError(tzid)
     }
-    return findOffset(localTime, tzInfo)
   }
 }

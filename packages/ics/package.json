@@ -31,6 +31,7 @@
     "luxon": "^3.7.2",
     "node-ical": "^0.22.1",
     "rrule": "^2.8.1",
+    "windows-iana": "^5.1.0",
     "zod": "^4.2.1"
   },
   "devDependencies": {

@@ -179,6 +179,16 @@ describe('property-parsers', () => {
       expect(dt.zone.name).toBe('America/New_York')
       expect(dt.toFormat("yyyy-MM-dd'T'HH:mm:ss")).toBe('2007-03-13T02:00:00')
     })
+
+    it('should resolve a Windows TZID to a fixed offset', () => {
+      const prop: IcsProperty = { key: 'DTSTART', value: '20070313T020000', params: { TZID: 'Eastern Standard Time' } }
+      const dt = parseIcsDateTime(prop)
+      // The date is during EDT, which is UTC-4.
+      // The windows-iana library resolves "Eastern Standard Time" to "America/New_York",
+      // the resolver calculates the offset (-240), and a FixedOffsetZone is created.
+      expect(dt.zone.name).toBe('UTC-4')
+      expect(dt.toFormat("yyyy-MM-dd'T'HH:mm:ss")).toBe('2007-03-13T02:00:00')
+    })
   })
 
   describe('parseOffset', () => {

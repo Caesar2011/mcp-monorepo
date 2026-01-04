@@ -25,9 +25,10 @@ import { findProperty, findProperties } from './utils.js'
 /**
  * Parses a date-time property into an ISO 8601 string.
  * @param prop - The ICS property.
+ * @param resolver - A function that resolves timezone offsets for a given DateTime and TZID.
  * @returns An ISO 8601 string or undefined.
  */
-function parseDateTimeValue(prop: IcsProperty | undefined, resolver?: TimeZoneResolver): string | undefined {
+function parseDateTimeValue(prop: IcsProperty | undefined, resolver: TimeZoneResolver): string | undefined {
   if (!prop) return undefined
   // Note: This does not resolve timezones, it just formats the parsed time to UTC.
   // This is suitable for properties like CREATED and LAST-MODIFIED which are often in UTC.
@@ -37,11 +38,12 @@ function parseDateTimeValue(prop: IcsProperty | undefined, resolver?: TimeZoneRe
 /**
  * Gathers all standard and custom properties from a VEVENT component.
  * @param event - The VEVENT component.
+ * @param resolver - A function that resolves timezone offsets for a given DateTime and TZID.
  * @returns A partially filled ExpandedEvent object containing all static details.
  */
 export function extractEventDetails(
   event: VComponent,
-  resolver?: TimeZoneResolver,
+  resolver: TimeZoneResolver,
 ): Omit<ExpandedEvent, 'start' | 'end' | 'allDay'> {
   const customProperties: Record<string, IcsProperty> = {}
   const knownKeys = new Set([
@@ -160,6 +162,7 @@ export function parseUnexpandedEvent(event: VComponent, resolver: TimeZoneResolv
  * @param event - The VEVENT component.
  * @param dtstart - The start time of the event.
  * @param isAllDay - Whether the event is an all-day event.
+ * @param resolver - A function that resolves timezone offsets for a given DateTime and TZID.
  * @returns A Luxon Duration object.
  */
 export function getEventDuration(
@@ -183,7 +186,12 @@ export function getEventDuration(
 
 /**
  * Gathers all inclusion dates from RRULE and RDATE properties.
- * @returns A Set of timestamps in milliseconds.
+ * @param event - The VEVENT component.
+ * @param dtstart - The start time of the event.
+ * @param rangeStart - The start of the query range.
+ * @param rangeEnd - The end of the query range.
+ * @param resolver - The timezone resolver function.
+ * @returns A Set of millisecond timestamps representing inclusion dates.
  */
 export function getInclusionDates(
   event: VComponent,
@@ -296,7 +304,7 @@ export function expandEvent(
     throw new IcsError(`Event with UID "${eventDetails.uid}" is missing a DTSTART property.`)
   }
 
-  const tzid = dtstartProp.params['TZID'] === 'Romance Standard Time' ? 'Europe/Paris' : dtstartProp.params['TZID']
+  const tzid = dtstartProp.params['TZID']
   // The 'VALUE=DATE' parameter indicates an all-day event.
   const isAllDay = dtstartProp.params['VALUE'] === 'DATE'
   const dtstart = parseIcsDateTime(dtstartProp, resolver)

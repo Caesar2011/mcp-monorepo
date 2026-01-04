@@ -1228,6 +1228,7 @@ __metadata:
     rrule: "npm:^2.8.1"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"
+    windows-iana: "npm:^5.1.0"
     zod: "npm:^4.2.1"
   bin:
     ics: ./dist/index.js
@@ -9522,6 +9523,13 @@ __metadata:
   version: 1.0.0
   resolution: "why-is-node-still-running@npm:1.0.0"
   checksum: 10c0/813155cb5243b0ef063c6e1c9ec2a2b3e98bea8f01ddb44a5e2634d2d0c10f2d689c6210fd690146dd6f137b9a385d8223fcecee3a98fb3ccd73b22e63a491ff
+  languageName: node
+  linkType: hard
+
+"windows-iana@npm:^5.1.0":
+  version: 5.1.0
+  resolution: "windows-iana@npm:5.1.0"
+  checksum: 10c0/aeea9da111837644e70e1b2f814cc4a85173e5ad3ccbd4f05317717a9511d52e23e417345cd80abe4fc752b5ac9a657fd1708ee63c7b38fcd9280944593eff00
   languageName: node
   linkType: hard
 

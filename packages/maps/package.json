@@ -1,6 +1,6 @@
 {
   "name": "@mcp-monorepo/maps",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "MCP server providing geospatial tools powered by the Stadia Maps API.",
   "main": "dist/index.js",

@@ -20,6 +20,7 @@ export class SyslogTransport extends transports.Console {
   constructor(private opts: SyslogTransportOptions) {
     super({})
     this.udpClient = dgram.createSocket('udp4')
+    this.udpClient.unref()
   }
 
   log(info: LogEntry, callback: () => void) {
@@ -61,7 +62,11 @@ export class SyslogTransport extends transports.Console {
    * Asynchronously waits for all pending logs to be sent and then closes the UDP socket.
    */
   public async close(): Promise<void> {
+    if (this.isClosing) return
     this.isClosing = true
+
+    this.udpClient.ref()
+
     if (this.pendingMessages === 0) {
       this.udpClient.close()
       return

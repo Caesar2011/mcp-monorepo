@@ -23,8 +23,6 @@
 import { mkdir, rm, writeFile } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
-import { logger } from '@mcp-monorepo/shared'
-
 import { LocalRAG } from './index.js'
 
 // --- Demo File Content ---
@@ -150,7 +148,6 @@ async function runDemo() {
     if (rag) {
       console.log('\n--- 7. Shutting down LocalRAG ---')
       await rag.shutdown()
-      logger.close()
       console.log('✅ Shutdown complete.')
     }
   }

@@ -43,8 +43,6 @@ export async function createMcpServer(serverOptions: {
     }
     await server.close()
     await transport.close()
-    await logger.close()
-    process.exit(0)
   }
 
   process.on('SIGINT', () => shutdown('SIGINT'))

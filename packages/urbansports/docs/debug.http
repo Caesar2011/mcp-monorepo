@@ -1,0 +1,168 @@
+###
+# @name GetLoginPage
+# Step 1: GET the login page to acquire a session cookie and the HTML with the auth token.
+# @no-redirect
+GET https://urbansportsclub.com/de/login
+Accept: text/html
+User-Agent: IntelliJ HTTP Client
+
+> {%
+  // This script uses a robust, two-stage regex process to find the dynamic auth token.
+  client.log("--- Extracting the dynamic auth token (robust method) ---");
+  const body = response.body;
+
+  // Stage 1: Find all hidden input tags in the entire response body.
+  const allHiddenInputsRegex = /<input[^>]+type="hidden"[^>]*>/g;
+    const hiddenInputTags = body.match(allHiddenInputsRegex) || [];
+
+  let found = false;
+
+  // Regexes for Stage 2: To be used on each tag found in Stage 1.
+  const nameRegex = /name="([^"]*)"/;
+  const valueRegex = /value="([^"]*)"/;
+
+  // Iterate through each found hidden input tag string.
+  for (const inputTag of hiddenInputTags) {
+    const nameMatch = inputTag.match(nameRegex);
+    const name = nameMatch ? nameMatch[1] : null;
+
+    if (name && name !== 'check') {
+      const valueMatch = inputTag.match(valueRegex);
+            const value = valueMatch ? valueMatch[1] : '';
+
+      client.global.set("authTokenName", name);
+      client.global.set("authTokenValue", value);
+
+      client.log(`Found token name: '${name}'`);
+      client.log(`Found token value: '${value}'`);
+      found = true;
+            break;
+    }
+  }
+
+  if (!found) {
+    client.log("ERROR: Could not find the dynamic auth token in the response.");
+  }
+%}
+
+###
+# @name PostLogin
+# Step 2: POST to the login endpoint using the extracted token. This establishes the session.
+# @no-redirect
+POST https://urbansportsclub.com/de/login
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+User-Agent: IntelliJ HTTP Client
+Referer: https://urbansportsclub.com/de/login
+
+remember-me=1&{{authTokenName}}={{authTokenValue}}&check=&email={{email}}&password={{password}}
+
+> {%
+  // TEST 1: Verify that a logged-in user is redirected away from the login page.
+  client.test("Should redirect after login", function() {
+    client.assert(response.status === 302, "Expected status to be 302 (Redirect), but got " + response.status);
+  });
+%}
+
+### -------------- LOGIN END ---------------- ###
+### -------------- LOGIN END ---------------- ###
+### -------------- LOGIN END ---------------- ###
+
+###
+# @name GetActivitiesAsJSON
+# (Optional) Load activity list data via an API-like call.
+GET https://urbansportsclub.com/de/activities?service_type=1&city_id=1&date=2026-01-04&plan_type=2&type%5B%5D=onsite&page=1
+Accept: application/json
+User-Agent: IntelliJ HTTP Client
+X-Requested-With: XMLHttpRequest
+Referer: https://urbansportsclub.com/de/activities
+
+###
+# @name GetActivitiesAsJSON
+# Servive type 0 (classes) and 1 (free training)
+# city_id 1 is Berlin, 2 Munich etc.
+# address_id is a specific venue
+# Plan type filters by allowed participation (1 for essential (S), 2 for classic (M), 3 for premium (L), 6 for max (XL))
+# type[] can be either 'live' or 'onsite'
+# date in YYYY-MM-DD format
+# (Optional) Load activity list data via an API-like call.
+GET https://urbansportsclub.com/de/activities?service_type=1&address_id=20806&city_id=1&date=2026-01-05&plan_type=2&page=2
+Accept: application/json
+User-Agent: IntelliJ HTTP Client
+X-Requested-With: XMLHttpRequest
+Referer: https://urbansportsclub.com/de/activities
+
+###
+# @name GetActivitiesAsJSON
+# (Optional) Load activity list data via an API-like call.
+GET https://urbansportsclub.com/de/activities?city_id=1&date=2026-01-05&plan_type=2
+Accept: application/json
+User-Agent: IntelliJ HTTP Client
+X-Requested-With: XMLHttpRequest
+Referer: https://urbansportsclub.com/de/activities
+
+
+
+###
+# @name Country/City List
+# Despite the url name this endpoint lists all the countries and supported cities and the city code
+GET https://urbansportsclub.com/de/venues
+User-Agent: IntelliJ HTTP Client
+
+###
+# @name Venue List
+# This is nice because we get a full JSON with all venues per city
+# returns addressId, name, adress, coords (lat/long), supported categories and plan types, district name and slug
+GET https://urbansportsclub.com/de/studios-map?city=1&plan_type=2
+Accept: application/json
+User-Agent: IntelliJ HTTP Client
+X-Requested-With: XMLHttpRequest
+
+
+
+###
+# @name Memebership Details
+# Name, service type, id, member since, refferal code, total check-ins, check-ins per category, contract details (Price, upcming changes, active state)
+# Returns 403 if logged out, can be used if session token is still valid
+GET https://urbansportsclub.com/de/profile/membership
+User-Agent: IntelliJ HTTP Client
+
+
+
+###
+# @name Upcoming Classes
+# Upcoming booked (reservation bound) and scheduled (not bound to any reservation) classes
+# Date, time, category, location
+GET https://urbansportsclub.com/de/profile/schedule
+User-Agent: IntelliJ HTTP Client
+
+###
+# @name Past classes
+GET https://urbansportsclub.com/de/profile/check-ins?page=1
+Accept: application/json
+User-Agent: IntelliJ HTTP Client
+X-Requested-With: XMLHttpRequest
+
+
+
+###
+# @name Activity details
+GET https://urbansportsclub.com/de/class-details/97518437
+Accept: application/json
+User-Agent: IntelliJ HTTP Client
+X-Requested-With: XMLHttpRequest
+
+###
+# @name Book activity
+GET https://urbansportsclub.com/de/search/book/97518437
+Accept: application/json
+User-Agent: IntelliJ HTTP Client
+X-Requested-With: XMLHttpRequest
+# {"success":true,"data":{"id":97518437,"state":"booked","label":"Gebucht","alert":"Du hast erfolgreich deinen Platz f\u00fcr diesen Kurs gebucht. Wenn du deine Buchung nicht wahrnehmen kannst, sage sie bitte rechtzeitig ab, damit andere Mitglieder die Chance auf eine Teilnahme bekommen. Solltest du deine Buchung nicht rechtzeitig stornieren, wird eine Geb\u00fchr von 5 Euro erhoben.","isManual":true,"cancelButton":{"text":"Buchung stornieren","confirm":{"title":"Bist du dir sicher, dass du deine Buchung stornieren m\u00f6chtest?","button":"Ja, ich m\u00f6chte stornieren"}},"freeSpots":{"current":23,"maximum":25}}}
+
+###
+# @name Cancel activity
+GET https://urbansportsclub.com/de/search/cancel/97518437
+Accept: application/json
+User-Agent: IntelliJ HTTP Client
+X-Requested-With: XMLHttpRequest
+# {"success":true,"data":{"id":97518437,"state":"cancel_customer","label":"Storniert","alert":"Deine Buchung wurde storniert.","freeSpots":{"current":22,"maximum":25}}}

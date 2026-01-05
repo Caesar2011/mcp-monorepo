@@ -1,0 +1,40 @@
+{
+  "name": "@mcp-monorepo/urbansports",
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Urban Sports Club tools for ModelContextProtocol.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": "./dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "typecheck": "tsc --noEmit",
+    "clean": "rimraf dist tsconfig.tsbuildinfo",
+    "generate-readme": "node ../../scripts/generate-readme.ts"
+  },
+  "dependencies": {
+    "@mcp-monorepo/shared": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "cheerio": "^1.1.2",
+    "domhandler": "^5.0.3",
+    "zod": "^4.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "rimraf": "^6.0.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "license": "AGPL-3.0-only"
+}

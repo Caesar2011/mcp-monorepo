@@ -16,6 +16,7 @@ export class SyslogTransport extends transports.Console {
   private pendingMessages = 0
   private isClosing = false
   private closeResolver?: () => void
+  private sequence = 0
 
   constructor(private opts: SyslogTransportOptions) {
     super({})
@@ -35,6 +36,8 @@ export class SyslogTransport extends transports.Console {
       severity: info.level as SyslogSeverityString,
       appName: this.opts.appName,
       message: info.message,
+      sdId: 'mcp@log',
+      sdParams: { seq: this.sequence++ },
     })
 
     this.pendingMessages++

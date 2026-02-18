@@ -9,7 +9,6 @@ import { getSpaceIdByKey, getSpaceKeyById, setSpaceMapping } from './space-cache
 
 import type {
   ConfluencePage,
-  ConfluenceQueryResponseBase,
   ConfluenceSpace,
   ConfluenceV2Page,
   ConfluenceV2PagedResponse,
@@ -29,7 +28,7 @@ export async function getPage(pageId: string): Promise<ConfluencePage> {
 
   if (version === '2') {
     const response = await requestConfluence<ConfluenceV2Page>({
-      endpoint: buildApiPath(`/pages/${pageId}`),
+      endpoint: buildApiPath(`pages/${pageId}`),
       queryParams: { 'body-format': 'atlas_doc_format' },
     })
     return normalizeV2Page(response)
@@ -47,7 +46,7 @@ export async function getPage(pageId: string): Promise<ConfluencePage> {
     }
 
     const response = await requestConfluence<V1PageResponse>({
-      endpoint: buildApiPath(`/content/${pageId}`),
+      endpoint: buildApiPath(`content/${pageId}`),
       queryParams: { expand: 'body.storage,version,space,history' },
     })
     return normalizeV1Page(response)
@@ -85,7 +84,7 @@ export async function createPage(params: {
     }
 
     const response = await requestConfluence<ConfluenceV2Page>({
-      endpoint: buildApiPath('/pages'),
+      endpoint: buildApiPath('pages'),
       method: 'POST',
       body,
     })
@@ -129,7 +128,7 @@ export async function createPage(params: {
     }
 
     const response = await requestConfluence<V1PageResponse>({
-      endpoint: buildApiPath('/content'),
+      endpoint: buildApiPath('content'),
       method: 'POST',
       body,
     })
@@ -173,7 +172,7 @@ export async function updatePage(
     }
 
     const response = await requestConfluence<ConfluenceV2Page>({
-      endpoint: buildApiPath(`/pages/${pageId}`),
+      endpoint: buildApiPath(`pages/${pageId}`),
       method: 'PUT',
       body,
     })
@@ -212,7 +211,7 @@ export async function updatePage(
     }
 
     const response = await requestConfluence<V1PageResponse>({
-      endpoint: buildApiPath(`/content/${pageId}`),
+      endpoint: buildApiPath(`content/${pageId}`),
       method: 'PUT',
       body,
     })
@@ -247,7 +246,7 @@ export async function listPagesInSpace(
     }
 
     const response = await requestConfluence<ConfluenceV2PagedResponse<ConfluenceV2Page>>({
-      endpoint: buildApiPath(`/spaces/${spaceId}/pages`),
+      endpoint: buildApiPath(`spaces/${spaceId}/pages`),
       queryParams,
     })
 
@@ -277,7 +276,7 @@ export async function listPagesInSpace(
       size: number
       _links: { self: string; next?: string; base: string }
     }>({
-      endpoint: buildApiPath('/content'),
+      endpoint: buildApiPath('content'),
       queryParams: {
         spaceKey,
         type: 'page',
@@ -323,7 +322,7 @@ export async function listSpaces(options?: {
     }
 
     const response = await requestConfluence<ConfluenceV2PagedResponse<ConfluenceV2Space>>({
-      endpoint: buildApiPath('/spaces'),
+      endpoint: buildApiPath('spaces'),
       queryParams,
     })
 
@@ -357,7 +356,7 @@ export async function listSpaces(options?: {
       size: number
       _links: { self: string; next?: string; base: string }
     }>({
-      endpoint: buildApiPath('/space'),
+      endpoint: buildApiPath('space'),
       queryParams: {
         start,
         limit,
@@ -414,7 +413,7 @@ export async function searchPages(
   }
 
   const response = await requestConfluence<ConfluenceV2PagedResponse<ConfluenceV2Page>>({
-    endpoint: buildApiPath('/pages'),
+    endpoint: buildApiPath('pages'),
     queryParams,
   })
 

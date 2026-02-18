@@ -2,7 +2,7 @@
 
 import { createMcpServer, logger } from '@mcp-monorepo/shared'
 
-import { getConfluenceBaseUrl, getConfluenceToken } from './lib/confluence-env.js'
+import { getConfluenceAuthMode, getConfluenceBaseUrl } from './lib/confluence-env.js'
 import { registerCreatePageTool } from './tools/create-page.js'
 import { registerListSpacePagesTool } from './tools/list-pages-of-space.js'
 import { registerListSpacesTool } from './tools/list-spaces.js'
@@ -33,6 +33,6 @@ createMcpServer({
     // Validate required environment variables on startup. This will throw an
     // error and prevent the server from starting if they are missing.
     getConfluenceBaseUrl()
-    getConfluenceToken()
+    getConfluenceAuthMode()
   },
 })

@@ -1187,6 +1187,7 @@ __metadata:
     "@mcp-monorepo/shared": "workspace:*"
     "@modelcontextprotocol/sdk": "npm:^1.25.1"
     "@types/node": "npm:^22.14.1"
+    extended-markdown-adf-parser: "npm:^2.4.0"
     rimraf: "npm:^6.0.1"
     typescript: "npm:^5.8.3"
     vitest: "npm:^3.2.4"

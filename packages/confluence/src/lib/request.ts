@@ -2,7 +2,7 @@
  * Generic library function for making Confluence API requests
  */
 
-import { getConfluenceAuthMode, getConfluenceBaseUrl } from './confluence-env.js'
+import { getConfluenceApiVersion, getConfluenceAuthMode, getConfluenceBaseUrl } from './confluence-env.js'
 import { type ConfluenceErrorResponse } from './types.js'
 
 export interface ConfluenceRequestOptions {
@@ -19,6 +19,14 @@ function buildAuthHeaders(): Record<string, string> {
     return { Authorization: `Bearer ${auth.value}` }
   }
   return { Cookie: auth.value }
+}
+
+export function buildApiPath(endpoint: string): string {
+  const version = getConfluenceApiVersion()
+  if (version === '2') {
+    return `/wiki/api/v2${endpoint}`
+  }
+  return `/rest/api${endpoint}` // v1 default
 }
 
 /**

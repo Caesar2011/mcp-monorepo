@@ -1,6 +1,8 @@
 import { registerTool } from '@mcp-monorepo/shared'
 import { z } from 'zod'
 
+import { buildApiPath } from '../lib/request.js'
+import { getConfluenceApiVersion } from '../lib/confluence-env.js'
 import { type SearchSqlTypes } from './search-sql.types.js'
 import { requestConfluence } from '../lib/request.js'
 
@@ -10,7 +12,8 @@ export const registerSearchCqlTool = (server: McpServer) =>
   registerTool(server, {
     name: 'search-cql',
     title: 'Search Confluence with CQL',
-    description: 'Search Confluence content using a CQL query.',
+    description:
+      'Search Confluence content using a CQL (Confluence Query Language) query. API v1 only - use search-pages for v2.',
     inputSchema: {
       cqlQuery: z.string().describe('Confluence Query Language string'),
       limit: z.number().int().min(1).max(100).describe('Number of results to return (default 10)').optional(),
@@ -32,8 +35,15 @@ export const registerSearchCqlTool = (server: McpServer) =>
     },
     isReadOnly: true,
     async fetcher({ cqlQuery, limit = 10, start = 0 }) {
+      const apiVersion = getConfluenceApiVersion()
+      if (apiVersion !== '1') {
+        throw new Error(
+          'search-cql is only available in API v1. Set CONFLUENCE_API_VERSION=1 or use search-pages for v2.',
+        )
+      }
+
       return await requestConfluence<SearchSqlTypes>({
-        endpoint: '/rest/api/content/search',
+        endpoint: buildApiPath('/content/search'),
         queryParams: {
           cql: cqlQuery,
           limit,

@@ -4,6 +4,7 @@
  */
 
 export type ConfluenceAuthMode = { type: 'token'; value: string } | { type: 'cookie'; value: string }
+export type ConfluenceApiVersion = '1' | '2'
 
 export function getConfluenceBaseUrl(): string {
   const url = process.env.CONFLUENCE_BASE_URL
@@ -23,4 +24,10 @@ export function getConfluenceAuthMode(): ConfluenceAuthMode {
   }
 
   return token ? { type: 'token', value: token } : { type: 'cookie', value: cookie as string }
+}
+
+export function getConfluenceApiVersion(): ConfluenceApiVersion {
+  const version = process.env.CONFLUENCE_API_VERSION
+  if (version === '2') return '2'
+  return '1' // Default to v1
 }

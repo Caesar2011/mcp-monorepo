@@ -1,68 +1,49 @@
 import { registerTool } from '@mcp-monorepo/shared'
 import { z } from 'zod'
 
-import { requestConfluence } from '../lib/request.js'
+import { getConfluenceApiVersion } from '../lib/confluence-env.js'
+import { getPage, updatePage } from '../lib/confluence.service.js'
 
-import type { ConfluencePageResponse, ConfluenceUpdatePageResponse } from './update-page.types.js'
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
 export const registerUpdatePageTool = (server: McpServer) =>
   registerTool(server, {
     name: 'update-page',
     title: 'Update Confluence Page',
-    description: 'Update the title and/or content of a Confluence page.',
+    description:
+      'Update the title and/or content of a Confluence page. In API v2, content should be Markdown (auto-converted to ADF). In API v1, content should be storage HTML format.',
     inputSchema: {
       pageId: z.string().describe('The Confluence page ID to update'),
       newTitle: z.string().describe('The new title for the page'),
-      newContent: z.string().describe('The new content for the page (in storage format)'),
-      currentVersionNumber: z
-        .number()
-        .int()
-        .min(1)
-        .describe('Current version number of the page (retrieved from latest page GET)'),
+      newContent: z.string().describe('The new content for the page (Markdown in v2, storage HTML in v1)'),
     },
     outputSchema: {
-      page: z.object({
-        id: z.string(),
-        type: z.string(),
-        status: z.string(),
-        title: z.string(),
-      }),
+      id: z.string(),
+      title: z.string(),
+      spaceKey: z.string(),
+      webUrl: z.string(),
+      version: z.number(),
     },
     isReadOnly: false,
     async fetcher({ pageId, newTitle, newContent }) {
-      const currentPage = await requestConfluence<ConfluencePageResponse>({
-        endpoint: `/rest/api/content/${pageId}`,
-      })
-      const requestBody: Record<string, unknown> = {
-        id: pageId,
-        type: 'page',
-        title: newTitle,
-        version: {
-          number: currentPage.version.number + 1,
-        },
-        body: {
-          storage: {
-            value: newContent,
-            representation: 'storage',
-          },
-        },
-      }
+      // Get current page to retrieve version number
+      const currentPage = await getPage(pageId)
 
-      return await requestConfluence<ConfluenceUpdatePageResponse>({
-        endpoint: `/rest/api/content/${encodeURIComponent(pageId)}`,
-        method: 'PUT',
-        body: requestBody,
+      return await updatePage(pageId, {
+        title: newTitle,
+        content: newContent,
+        version: currentPage.version,
       })
     },
     formatter(data) {
+      const apiVersion = getConfluenceApiVersion()
       return {
-        page: {
-          id: `${data.id}`,
-          type: data.type,
-          status: data.status,
-          title: data.title,
-        },
+        id: data.id,
+        title: data.title,
+        spaceKey: data.spaceKey,
+        webUrl: data.webUrl,
+        version: data.version,
+        format: apiVersion === '2' ? 'markdown' : 'storage-html',
       }
     },
   })

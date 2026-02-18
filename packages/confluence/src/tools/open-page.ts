@@ -1,8 +1,8 @@
 import { registerTool } from '@mcp-monorepo/shared'
 import { z } from 'zod'
 
-import { type ConfluencePageWithBodyResponse } from './open-page.types.js'
-import { requestConfluence } from '../lib/request.js'
+import { getConfluenceApiVersion } from '../lib/confluence-env.js'
+import { getPage } from '../lib/confluence.service.js'
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 
@@ -10,31 +10,33 @@ export const registerOpenPageTool = (server: McpServer) =>
   registerTool(server, {
     name: 'open-page',
     title: 'Open Confluence Page',
-    description: 'Fetch a Confluence page content by pageId (storage format).',
+    description:
+      'Fetch a Confluence page content by pageId. Returns Markdown format in v2 (converted from ADF), storage HTML format in v1.',
     inputSchema: {
       pageId: z.string().describe('The Confluence page ID to fetch'),
     },
     outputSchema: {
       id: z.string(),
-      type: z.enum(['page', 'global']),
       title: z.string(),
-      body: z.string(),
-      _expandable: z.record(z.string(), z.string().optional()),
+      spaceKey: z.string(),
+      webUrl: z.string(),
+      content: z.string().optional(),
+      version: z.number(),
     },
     isReadOnly: true,
     async fetcher({ pageId }) {
-      return await requestConfluence<ConfluencePageWithBodyResponse>({
-        endpoint: `/rest/api/content/${pageId}`,
-        queryParams: { expand: 'body.storage' },
-      })
+      return await getPage(pageId)
     },
     formatter(data) {
+      const apiVersion = getConfluenceApiVersion()
       return {
-        id: `${data.id}`,
-        type: data.type,
+        id: data.id,
         title: data.title,
-        body: data.body.storage.value,
-        _expandable: Object.fromEntries(Object.entries(data._expandable).filter(([, value]) => value)),
+        spaceKey: data.spaceKey,
+        webUrl: data.webUrl,
+        content: data.content,
+        version: data.version,
+        format: apiVersion === '2' ? 'markdown' : 'storage-html',
       }
     },
   })

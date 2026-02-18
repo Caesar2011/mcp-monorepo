@@ -6,3 +6,10 @@ This package provides a set of tools for interacting with a Jira instance. It al
 - **Issue Management**: Fetch detailed information for a single issue and update its status by transitioning it through its workflow.
 - **Discovery**: List available status transitions for an issue and find recently created projects.
 - **User Information**: Retrieve the profile details of the currently authenticated user.
+
+### Authentication
+
+Two authentication modes are supported. Exactly one must be configured:
+
+- **Personal Access Token (PAT)**: Set `JIRA_TOKEN` with a valid Jira PAT.
+- **Cookie-based authentication**: Set `JIRA_COOKIE` with the raw Cookie header value from an authenticated Jira session.

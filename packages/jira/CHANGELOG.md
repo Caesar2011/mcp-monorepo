@@ -1,5 +1,11 @@
 # @mcp-monorepo/jira
 
+## 1.3.0
+
+### Minor Changes
+
+- 397cff4: add cookie-based authentication and require exactly one of JIRA_TOKEN or JIRA_COOKIE
+
 ## 1.2.0
 
 ### Minor Changes

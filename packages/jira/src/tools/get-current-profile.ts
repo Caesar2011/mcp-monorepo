@@ -13,7 +13,7 @@ export const registerGetCurrentProfileTool = (server: McpServer) =>
     inputSchema: {},
     outputSchema: {
       displayName: z.string(),
-      emailAddress: z.string(),
+      emailAddress: z.string().nullable(),
       accountId: z.string(),
     },
     isReadOnly: true,

@@ -119,7 +119,7 @@ async function main(): Promise<void> {
   await stageFileToGit(readmePath)
 
   console.log(`${c.green}✓ README for ${pkgJson.name} successfully generated and staged.${c.reset}`)
-  process.exit(0)
+  //process.exit(0)
 }
 
 // --- Section Generators ---

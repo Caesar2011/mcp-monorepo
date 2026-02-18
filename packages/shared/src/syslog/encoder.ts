@@ -58,17 +58,20 @@ export function createSyslogMessage(options: SyslogMessage): string {
   const resolvedMsgId = msgId ?? '-'
 
   let structuredData = '-'
+  const sdIdToUse = sdId || 'mcp@log'
+  const sdParamsToUse = { ...sdParams }
 
-  if (sdId && sdParams) {
-    const sdContentParts: string[] = []
-    for (const key in sdParams) {
-      if (Object.prototype.hasOwnProperty.call(sdParams, key)) {
-        const value = sdParams[key]
-        const escapedValue = escapeSyslogField(String(value))
-        sdContentParts.push(`${key}="${escapedValue}"`)
-      }
+  const sdContentParts: string[] = []
+  for (const key in sdParamsToUse) {
+    if (Object.prototype.hasOwnProperty.call(sdParamsToUse, key)) {
+      const value = sdParamsToUse[key]
+      const escapedValue = escapeSyslogField(String(value))
+      sdContentParts.push(`${key}="${escapedValue}"`)
     }
-    structuredData = `[${sdId} ${sdContentParts.join(' ')}]`
+  }
+
+  if (sdContentParts.length > 0) {
+    structuredData = `[${sdIdToUse} ${sdContentParts.join(' ')}]`
   }
 
   const escapedMessage = escapeSyslogField(message)

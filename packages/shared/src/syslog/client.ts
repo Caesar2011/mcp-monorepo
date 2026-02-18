@@ -82,36 +82,41 @@ export const logger = {
   setName: (name: string) => transport.setName(name),
 
   close: async (): Promise<void> => {
-    // We call the transport's close directly because winston's logger.close() is synchronous
-    // and won't wait for our async transport to finish.
     await transport.close()
   },
 }
 
 let isShuttingDown = false
 
-async function gracefulShutdown(signal: string, exitCode = 0) {
+async function gracefulShutdown(signal: string, exitCode?: number) {
   if (isShuttingDown) return
   isShuttingDown = true
+
+  logger.info(`Graceful shutdown initiated due to ${signal}. Flushing logs...`)
 
   try {
     await logger.close()
   } catch (e) {
     // eslint-disable-next-line use-logger-not-console/replace-console-with-logger
     console.error('Error during graceful shutdown:', e)
-    exitCode = 1
+    if (exitCode !== undefined) exitCode = 1
   } finally {
-    process.exit(exitCode)
+    if (exitCode !== undefined) {
+      process.exit(exitCode)
+    }
   }
 }
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'))
-process.on('SIGINT', () => gracefulShutdown('SIGINT'))
+process.on('beforeExit', async () => {
+  await gracefulShutdown('beforeExit')
+})
+
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM', 0))
+process.on('SIGINT', () => gracefulShutdown('SIGINT', 0))
 
 process.on('uncaughtException', async (error, origin) => {
   // eslint-disable-next-line use-logger-not-console/replace-console-with-logger
   console.error(`Uncaught Exception on ${origin}:`, error)
-  // Log the critical error
   logger.crit(`Uncaught Exception on ${origin}: ${error.stack ?? error.message}`)
   await gracefulShutdown('uncaughtException', 2)
 })

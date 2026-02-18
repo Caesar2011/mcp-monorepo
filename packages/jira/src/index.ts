@@ -4,12 +4,16 @@ import { createMcpServer, logger } from '@mcp-monorepo/shared'
 
 import { getJiraApiVersion, getJiraAuthMode, getJiraBaseUrl } from './lib/jira-env.js'
 import { getCurrentProfile } from './lib/jira.service.js'
+import { registerAddCommentTool } from './tools/add-comment.js'
+import { registerCreateIssueTool } from './tools/create-issue.js'
 import { registerExecuteJqlTool } from './tools/execute-jql.js'
+import { registerGetCreateMetadataTool } from './tools/get-create-metadata.js'
 import { registerGetCurrentProfileTool } from './tools/get-current-profile.js'
 import { registerGetIssueTool } from './tools/get-issue.js'
 import { registerGetLatestProjectsTool } from './tools/get-latest-projects.js'
 import { registerGetTicketTransitionsTool } from './tools/get-ticket-transitions.js'
 import { registerSetIssueStatusTool } from './tools/set-issue-status.js'
+import { registerUpdateIssueTool } from './tools/update-issue.js'
 
 createMcpServer({
   name: 'jira',
@@ -22,6 +26,10 @@ createMcpServer({
     registerGetIssueTool,
     registerSetIssueStatusTool,
     registerGetTicketTransitionsTool,
+    registerGetCreateMetadataTool,
+    registerCreateIssueTool,
+    registerUpdateIssueTool,
+    registerAddCommentTool,
   ],
   async onReady() {
     if (process.env.JIRA_INSECURE_SKIP_VERIFY === 'true') {

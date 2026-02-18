@@ -2,7 +2,7 @@
 
 import { createMcpServer, logger } from '@mcp-monorepo/shared'
 
-import { getJiraAuthMode, getJiraBaseUrl } from './lib/jira-env.js'
+import { getJiraApiVersion, getJiraAuthMode, getJiraBaseUrl } from './lib/jira-env.js'
 import { getCurrentProfile } from './lib/jira.service.js'
 import { registerExecuteJqlTool } from './tools/execute-jql.js'
 import { registerGetCurrentProfileTool } from './tools/get-current-profile.js'
@@ -34,13 +34,25 @@ createMcpServer({
     // Eagerly validate environment variables to fail fast on startup.
     getJiraBaseUrl()
     const auth = getJiraAuthMode()
+    const apiVersion = getJiraApiVersion()
+
+    logger.info(`Using Jira REST API version ${apiVersion}`)
     logger.info(`Using Jira authentication mode: ${auth.type}`)
+
+    if (apiVersion === '3') {
+      logger.info(
+        'API v3 features: Issue descriptions are converted from Atlassian Document Format (ADF) to Markdown. ' +
+          'User emailAddress may be null due to GDPR privacy settings. ' +
+          'JQL search uses enhanced endpoint with nextPageToken pagination.',
+      )
+    }
 
     // Perform a test API call to ensure credentials are valid and the service is reachable.
     try {
       logger.info('Verifying Jira connection and credentials...')
       const profile = await getCurrentProfile()
-      logger.info(`Successfully connected to Jira as "${profile.displayName}" (${profile.emailAddress}).`)
+      const emailDisplay = profile.emailAddress || '<email hidden>'
+      logger.info(`Successfully connected to Jira as "${profile.displayName}" (${emailDisplay}).`)
     } catch (error) {
       logger.error(
         'Failed to connect to Jira. Please check JIRA_BASE_URL, JIRA_TOKEN/JIRA_COOKIE, and TLS settings.',

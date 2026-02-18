@@ -1,6 +1,7 @@
 import { registerTool } from '@mcp-monorepo/shared'
 import { z } from 'zod'
 
+import { adfToMd } from '../lib/adf-utils.js'
 import { getIssue } from '../lib/jira.service.js'
 
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -20,7 +21,7 @@ export const registerGetIssueTool = (server: McpServer) =>
       summary: z.string().optional(),
       status: z.string().optional(),
       assignee: z.string().optional(),
-      description: z.string().optional(),
+      description: z.string().optional(), // Always markdown (converted from ADF in v3)
     },
     isReadOnly: true,
     async fetcher({ issueIdOrKey, fields, expand }) {
@@ -32,7 +33,7 @@ export const registerGetIssueTool = (server: McpServer) =>
         summary: data.fields.summary,
         status: data.fields.status?.name,
         assignee: data.fields.assignee?.displayName,
-        description: data.fields.description,
+        description: adfToMd(data.fields.description), // Convert ADF to Markdown
       }
     },
   })

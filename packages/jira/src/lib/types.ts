@@ -72,3 +72,81 @@ export interface JiraTransitionsResponse {
   expand?: string
   transitions: JiraTransition[]
 }
+
+export interface JiraCreateIssueResponse {
+  id: string
+  key: string
+  self: string
+  transition?: {
+    status: number
+    errorCollection: {
+      errorMessages: string[]
+      errors: Record<string, string>
+    }
+  }
+}
+
+export interface JiraComment {
+  id: string
+  self: string
+  author: {
+    accountId: string
+    displayName: string
+    emailAddress?: string | null
+  }
+  body: string | ADFDocument
+  created: string
+  updated: string
+  updateAuthor: {
+    accountId: string
+    displayName: string
+  }
+  visibility?: {
+    type: string
+    value: string
+    identifier: string
+  }
+}
+
+export interface JiraIssueType {
+  id: string
+  name: string
+  description?: string
+  subtask: boolean
+}
+
+export interface JiraFieldSchema {
+  type: string
+  system?: string
+  items?: string
+  custom?: string
+}
+
+export interface JiraFieldMetadata {
+  required: boolean
+  name: string
+  schema: JiraFieldSchema
+  key?: string
+  hasDefaultValue?: boolean
+  operations?: string[]
+  allowedValues?: Array<{
+    id?: string
+    name?: string
+    value?: string
+  }>
+}
+
+export interface JiraCreateMetadata {
+  projects: Array<{
+    id: string
+    key: string
+    name: string
+    issuetypes: Array<{
+      id: string
+      name: string
+      description?: string
+      subtask: boolean
+      fields: Record<string, JiraFieldMetadata>
+    }>
+  }>
+}

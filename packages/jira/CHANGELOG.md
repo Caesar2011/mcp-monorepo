@@ -1,5 +1,12 @@
 # @mcp-monorepo/jira
 
+## 1.4.0
+
+### Minor Changes
+
+- 6c48353: add Jira API v3 support with ADF conversion and enhanced JQL pagination
+- 9879150: add create/update issue APIs, add comment and get-create-metadata endpoints, update types and register tools
+
 ## 1.3.0
 
 ### Minor Changes

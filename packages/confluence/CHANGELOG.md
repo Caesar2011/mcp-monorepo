@@ -1,5 +1,15 @@
 # @mcp-monorepo/confluence
 
+## 1.3.0
+
+### Minor Changes
+
+- c065d1b: add support for cookie auth (CONFLUENCE_COOKIE) and require exactly one of CONFLUENCE_TOKEN or CONFLUENCE_COOKIE
+
+### Patch Changes
+
+- b7715a2: updated yarn lock
+
 ## 1.2.0
 
 ### Minor Changes

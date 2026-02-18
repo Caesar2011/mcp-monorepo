@@ -1,4 +1,4 @@
-import { getJiraBaseUrl, getJiraToken } from './jira-env.js'
+import { getJiraAuthMode, getJiraBaseUrl } from './jira-env.js'
 
 import type {
   JiraIssue,
@@ -8,12 +8,20 @@ import type {
   JiraTransitionsResponse,
 } from './types.js'
 
+function buildAuthHeaders(): Record<string, string> {
+  const auth = getJiraAuthMode()
+  if (auth.type === 'token') {
+    return { Authorization: `Bearer ${auth.value}` }
+  }
+  return { Cookie: auth.value }
+}
+
 async function jiraRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const url = new URL(endpoint, getJiraBaseUrl())
   const response = await fetch(url.toString(), {
     ...options,
     headers: {
-      Authorization: `Bearer ${getJiraToken()}`,
+      ...buildAuthHeaders(),
       Accept: 'application/json',
       'Content-Type': 'application/json',
       ...options.headers,
@@ -25,7 +33,6 @@ async function jiraRequest<T>(endpoint: string, options: RequestInit = {}): Prom
     throw new Error(`Jira API request failed with status ${response.status}: ${errorText}`)
   }
 
-  // Handle cases like 204 No Content
   if (response.status === 204) {
     return undefined as T
   }

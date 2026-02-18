@@ -2,7 +2,7 @@
 
 import { createMcpServer, logger } from '@mcp-monorepo/shared'
 
-import { getJiraBaseUrl, getJiraToken } from './lib/jira-env.js'
+import { getJiraAuthMode, getJiraBaseUrl } from './lib/jira-env.js'
 import { getCurrentProfile } from './lib/jira.service.js'
 import { registerExecuteJqlTool } from './tools/execute-jql.js'
 import { registerGetCurrentProfileTool } from './tools/get-current-profile.js'
@@ -33,7 +33,8 @@ createMcpServer({
 
     // Eagerly validate environment variables to fail fast on startup.
     getJiraBaseUrl()
-    getJiraToken()
+    const auth = getJiraAuthMode()
+    logger.info(`Using Jira authentication mode: ${auth.type}`)
 
     // Perform a test API call to ensure credentials are valid and the service is reachable.
     try {
@@ -41,8 +42,10 @@ createMcpServer({
       const profile = await getCurrentProfile()
       logger.info(`Successfully connected to Jira as "${profile.displayName}" (${profile.emailAddress}).`)
     } catch (error) {
-      logger.error('Failed to connect to Jira. Please check JIRA_BASE_URL, JIRA_TOKEN, and TLS settings.', error)
-      // Re-throw to prevent the server from starting in a bad state.
+      logger.error(
+        'Failed to connect to Jira. Please check JIRA_BASE_URL, JIRA_TOKEN/JIRA_COOKIE, and TLS settings.',
+        error,
+      )
       throw new Error('Jira connection verification failed.')
     }
   },
